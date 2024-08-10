@@ -1,0 +1,44 @@
+<div class="row">
+    <div class="col-md-12">
+        <div id="dashboardAutomatico" class="row">
+            <div id="autoDashBoard" class="col-md-12">
+
+                <div *ngFor="let item of _menuList">
+
+                    <div class="row top20px">
+                        <div class="col-md-12">
+                            <span class="label label-primary">{{ item.name }}</span>
+                        </div>
+                    </div>
+
+                    <div *ngFor="let itemSub of item.subMenus" class="divAutoDashBoard" (click)="changeRoute(itemSub.linkList)">
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <img class="imgDashboard" [ngStyle]="{'max-width.px': itemSub.imgDashSize}" src="{{ itemSub.imgDash }}"/>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <span class="label label-success">{{ itemSub.name }}</span>
+                                    </div>
+    
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <label class="LabelCountInvoicingDashboard">{{ itemSub.description }}</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

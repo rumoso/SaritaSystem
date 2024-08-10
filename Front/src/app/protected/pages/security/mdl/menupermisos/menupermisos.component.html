@@ -1,0 +1,93 @@
+<div class="" style="padding: 30px;">
+
+    <div class="row">
+                                    
+        <div class="col-md-12">
+            
+            <h1>{{ ODataP.description }}</h1>
+
+        </div>
+            
+    </div>
+
+    <div class="row top10px">
+        <div class="col-md-12">
+            <div style="float: left;">
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="fn_insertMenusPermisionsByIdRelation()">
+                <mat-icon matPrefix class="my-icon">save</mat-icon>
+                Guardar</button>
+
+                <button mat-raised-button
+                type="button"
+                (click)="fn_CerrarMDL()">
+                <mat-icon matPrefix class="my-icon">close</mat-icon>
+                Cerrar</button>
+                
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div id="dashboardAutomatico" class="row">
+                <div id="autoDashBoard" class="col-md-12">
+    
+                    <div *ngFor="let item of _menuList">
+    
+                        <div class="row top20px">
+                            <div class="col-md-12">
+                                <span class="label label-primary">{{ item.name }}</span>
+                            </div>
+                        </div>
+    
+                        <div *ngFor="let itemSub of item.subMenus" class="divAutoDashBoard" >
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <img class="imgDashboard" [ngStyle]="{'max-width.px': itemSub.imgDashSize}" src="{{ itemSub.imgDash }}"/>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <mat-checkbox class="example-margin" id="{{ itemSub.id }}" [(ngModel)]="itemSub.bPermissionMenu" >{{ itemSub.name }}</mat-checkbox>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    
+                    </div>
+    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row top10px">
+        <div class="col-md-12">
+            <div style="float: left;">
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="fn_insertMenusPermisionsByIdRelation()">
+                <mat-icon matPrefix class="my-icon">save</mat-icon>
+                Guardar</button>
+
+                <button mat-raised-button
+                type="button"
+                (click)="fn_CerrarMDL()">
+                <mat-icon matPrefix class="my-icon">close</mat-icon>
+                Cerrar</button>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<app-spinner [hidden]="!bShowSpinner"></app-spinner>

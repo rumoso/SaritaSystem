@@ -1,0 +1,395 @@
+
+
+<mat-accordion >
+
+    <mat-expansion-panel (opened)="panelOpenState = true"
+                         (closed)="panelOpenState = false"
+                         [expanded]="true"
+                         class="divMain"
+                         style="margin-top: 10px !important;">
+      <mat-expansion-panel-header class="autoHeight">
+        <mat-panel-title class="text-align: center">
+          Filtros del inventario
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="row">
+        <div class="col-md-12">
+
+                <br>
+
+                <form action=""
+                autocomplete="off"
+                [formGroup]="parametersForm"
+                >
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            <mat-label>Sucursal: </mat-label>
+                            <mat-form-field
+                            style="width: 100%;"
+                            (click)="cbxSucursales_Search()">
+                                <input type="text"
+                                        id="cbxSucursal"
+                                        style="width: 100%;"
+                                        placeholder="Selecciona..."
+                                        aria-label="Number"
+                                        matInput
+                                        formControlName="sucursalDesc"
+                                        [matAutocomplete]="cbxSucursal"
+                                        (input)="cbxSucursales_Search()">
+                                        <button *ngIf="parametersForm.value.sucursalDesc" matSuffix mat-icon-button aria-label="Clear" (click)="cbxSucursales_Clear()">
+                                            <mat-icon>close</mat-icon>
+                                        </button>
+                                <mat-autocomplete autoActiveFirstOption
+                                                    #cbxSucursal="matAutocomplete"
+                                                    (optionSelected)="cbxSucursales_SelectedOption( $event )">
+                                    <mat-option *ngFor="let role of cbxSucursales" [value]="role">
+                                        {{ role.name }}
+                                    </mat-option>
+
+                                    <mat-option value="" *ngIf="cbxSucursales.length == 0 && parametersForm.value.sucursalDesc">
+                                        No se encontró nada...
+                                    </mat-option>
+
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                    </div>
+
+                    <div class="row top20px">
+                        <div class="col-md-4">
+                            <mat-form-field fxLayout.xs="column" class="with100">
+                                <mat-label>Código de barras</mat-label>
+                                <mat-icon matPrefix class="my-icon">qr_code</mat-icon>
+                                <input matInput placeholder="Ingrese un Código de barras"
+                                formControlName="barCode">
+                              </mat-form-field>
+                        </div>
+
+                        <div class="col-md-8">
+                            <mat-form-field class="with100">
+                                <mat-label>Nombre</mat-label>
+                                <input matInput placeholder="Ingrese un nombre"
+                                formControlName="name">
+                              </mat-form-field>
+                        </div>
+
+                    </div>
+
+                    <div class="row top20px" text>
+
+                        <div class="col-md-3">
+
+                            <mat-label>Grupo: </mat-label>
+                                <mat-form-field
+                                style="width: 100%;"
+                                (click)="cbxGroups_Search()">
+                                    <input type="text"
+                                            id="cbxGroups"
+                                            style="width: 100%;"
+                                            placeholder="Selecciona..."
+                                            aria-label="Number"
+                                            matInput
+                                            formControlName="groupDesc"
+                                            [matAutocomplete]="cbxGroups"
+                                            (input)="cbxGroups_Search()">
+                                            <button *ngIf="parametersForm.value.groupDesc" matSuffix mat-icon-button aria-label="Clear" (click)="cbxGroups_Clear()">
+                                                <mat-icon>close</mat-icon>
+                                              </button>
+                                    <mat-autocomplete autoActiveFirstOption
+                                                        #cbxGroups="matAutocomplete"
+                                                        (optionSelected)="cbxGroups_SelectedOption( $event )">
+                                        <mat-option *ngFor="let item of cbxGroupsList" [value]="item">
+                                            {{ item.name }}
+                                        </mat-option>
+
+                                        <mat-option value="" *ngIf="cbxGroupsList.length == 0 && parametersForm.value.groupDesc">
+                                            No se encontró nada...
+                                        </mat-option>
+
+                                    </mat-autocomplete>
+                                </mat-form-field>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <mat-label>Familia: </mat-label>
+                                <mat-form-field
+                                style="width: 100%;"
+                                (click)="cbxFamilies_Search()">
+                                    <input type="text"
+                                            id="cbxFamilies"
+                                            style="width: 100%;"
+                                            placeholder="Selecciona..."
+                                            aria-label="Number"
+                                            matInput
+                                            formControlName="familyDesc"
+                                            [matAutocomplete]="cbxFamilies"
+                                            (input)="cbxFamilies_Search()">
+                                            <button *ngIf="parametersForm.value.familyDesc" matSuffix mat-icon-button aria-label="Clear" (click)="cbxFamilies_Clear()">
+                                                <mat-icon>close</mat-icon>
+                                              </button>
+                                    <mat-autocomplete autoActiveFirstOption
+                                                        #cbxFamilies="matAutocomplete"
+                                                        (optionSelected)="cbxFamilies_SelectedOption( $event )">
+                                        <mat-option *ngFor="let item of cbxFamiliesList" [value]="item">
+                                            {{ item.name }}
+                                        </mat-option>
+
+                                        <mat-option value="" *ngIf="cbxFamiliesList.length == 0 && parametersForm.value.familyDesc">
+                                            No se encontró nada...
+                                        </mat-option>
+
+                                    </mat-autocomplete>
+                                </mat-form-field>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <mat-label>Calidad: </mat-label>
+                                <mat-form-field
+                                style="width: 100%;"
+                                (click)="cbxQuality_Search()">
+                                    <input type="text"
+                                            id="cbxQuality"
+                                            style="width: 100%;"
+                                            placeholder="Selecciona..."
+                                            aria-label="Number"
+                                            matInput
+                                            formControlName="qualityDesc"
+                                            [matAutocomplete]="cbxQuality"
+                                            (input)="cbxQuality_Search()">
+                                            <button *ngIf="parametersForm.value.qualityDesc" matSuffix mat-icon-button aria-label="Clear" (click)="cbxQuality_Clear()">
+                                                <mat-icon>close</mat-icon>
+                                              </button>
+                                    <mat-autocomplete autoActiveFirstOption
+                                                        #cbxQuality="matAutocomplete"
+                                                        (optionSelected)="cbxQuality_SelectedOption( $event )">
+                                        <mat-option *ngFor="let item of cbxQualityList" [value]="item">
+                                            {{ item.name }}
+                                        </mat-option>
+
+                                        <mat-option value="" *ngIf="cbxQualityList.length == 0 && parametersForm.value.qualityDesc">
+                                            No se encontró nada...
+                                        </mat-option>
+
+                                    </mat-autocomplete>
+                                </mat-form-field>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <mat-label>Origen: </mat-label>
+                                <mat-form-field
+                                style="width: 100%;"
+                                (click)="cbxOrigin_Search()">
+                                    <input type="text"
+                                            id="cbxOrigin"
+                                            style="width: 100%;"
+                                            placeholder="Selecciona..."
+                                            aria-label="Number"
+                                            matInput
+                                            formControlName="originDesc"
+                                            [matAutocomplete]="cbxOrigin"
+                                            (input)="cbxOrigin_Search()">
+                                            <button *ngIf="parametersForm.value.originDesc" matSuffix mat-icon-button aria-label="Clear" (click)="cbxOrigin_Clear()">
+                                                <mat-icon>close</mat-icon>
+                                              </button>
+                                    <mat-autocomplete autoActiveFirstOption
+                                                        #cbxOrigin="matAutocomplete"
+                                                        (optionSelected)="cbxOrigin_SelectedOption( $event )">
+                                        <mat-option *ngFor="let item of cbxOriginList" [value]="item">
+                                            {{ item.name }}
+                                        </mat-option>
+
+                                        <mat-option value="" *ngIf="cbxOriginList.length == 0 && parametersForm.value.originDesc">
+                                            No se encontró nada...
+                                        </mat-option>
+
+                                    </mat-autocomplete>
+                                </mat-form-field>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="row top10px">
+                        <div class="col-md-12">
+                            <div style="float: left;">
+
+                                <button mat-raised-button
+                                color="primary"
+                                type="submit"
+                                class="marginRight10px"
+                                (click)="fn_getInventaryListWithPage()">
+                                <mat-icon matPrefix class="my-icon">search</mat-icon>
+                                Buscar</button>
+
+                                <button mat-raised-button
+                                type="button"
+                                (click)="parametersForm_Clear()">
+                                <mat-icon matPrefix class="my-icon">clear</mat-icon>
+                                limpiar</button>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+        </div>
+
+    </div>
+
+    </mat-expansion-panel>
+  </mat-accordion>
+
+<div *ngFor="let item of inventaryBySucursalList" class="divSection">
+
+
+    <div class="row" style="margin-top: -35px;">
+        <div class="col-md-12">
+            <div class="badge bg-primary text-wrap" style="font-size: 15px;">
+                {{ item.sucursalDesc }}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-2">
+            <h1>{{ item.sumPiezas }} PZ</h1>
+        </div>
+        <div class="col-md-5" style="position: relative;" *ngIf="rep_costosProductos">
+            <img style="display: inline-block;" width="60" src="assets/img/icons/currencyIco.gif" alt="">
+            <h2 style="display: inline-block;">Costo Total: {{ item.sumCost | currency }}</h2>
+        </div>
+        <div class="col-md-5" style="position: relative;">
+            <img style="display: inline-block;" width="60" src="assets/img/icons/currencyIco.gif" alt="">
+            <h2 style="display: inline-block;">Importe Total: {{ item.sumPrice | currency }}</h2>
+        </div>
+    </div>
+
+</div>
+
+<div class="divMain" style="width: 100%; margin-top: 10px !important;">
+
+    <div class="row top10px">
+        <div class="col-md-12">
+            <div style="float: left;">
+
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="exportDataToExcel( true )"
+                *ngIf="rep_costosProductos">
+                <mat-icon matPrefix class="my-icon">insert_drive_file</mat-icon>
+                EXPORTAR A EXCEL CON PRECIOS Y COSTOS</button>
+
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="exportDataToExcel( false )"
+                *ngIf="rep_costosProductos">
+                <mat-icon matPrefix class="my-icon">insert_drive_file</mat-icon>
+                EXPORTAR A EXCEL SIN PRECIOS Y COSTOS</button>
+
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="exportDataToExcel( true )"
+                *ngIf="!rep_costosProductos">
+                <mat-icon matPrefix class="my-icon">insert_drive_file</mat-icon>
+                EXPORTAR A EXCEL CON PRECIOS</button>
+
+                <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="marginRight10px"
+                (click)="exportDataToExcel( false )"
+                *ngIf="!rep_costosProductos">
+                <mat-icon matPrefix class="my-icon">insert_drive_file</mat-icon>
+                EXPORTAR A EXCEL SIN PRECIOS</button>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row top20px">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+
+                            <th class="textAlingLeft padding-th">Código de barras</th>
+                            <th class="textAlingLeft padding-th">Nombre</th>
+                            <th class="textAlingRight padding-th" *ngIf="rep_costosProductos">Costo</th>
+                            <th class="textAlingRight padding-th">Precio</th>
+                            <th class="textAlingRight padding-th">Apartado</th>
+                            <th class="textAlingRight padding-th">Consignación</th>
+                            <th class="textAlingRight padding-th">Mostrador</th>
+                            <th class="textAlingRight padding-th">Gramos</th>
+                            <th class="textAlingRight padding-th" *ngIf="rep_costosProductos">Costo T</th>
+                            <th class="textAlingRight padding-th">Precio T</th>
+                            <th class="textAlingLeft padding-th">Sucursal</th>
+                            <th class="textAlingLeft padding-th">Familia</th>
+                            <th class="textAlingLeft padding-th">Grupo</th>
+                            <th class="textAlingLeft padding-th">Calidad</th>
+                            <th class="textAlingLeft padding-th">Origen</th>
+
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of catlist">
+
+                                <td class="textAlingLeft">
+                                    <div class="row" style="width: 150px;">
+                                        <div class="col-md-1">
+                                            <mat-icon style="margin-top: -5px;" matPrefix class="my-icon">qr_code</mat-icon>
+                                        </div>
+                                        <div class="col-md-10">
+                                            <label style="margin-left: 10px;">{{ item.barCode }}</label>
+                                        </div>
+                                    </div>
+
+                                </td>
+                                <td class="textAlingLeft">{{ item.name }}</td>
+
+                                <td class="textAlingRight" *ngIf="rep_costosProductos">{{ item.cost | currency }}</td>
+                                <td class="textAlingRight">{{ item.price | currency }}</td>
+                                <td class="textAlingRight">{{ item.catInventaryApart }} PZ</td>
+                                <td class="textAlingRight">{{ item.catInventaryCons }} PZ</td>
+                                <td class="textAlingRight">{{ item.catInventary }} PZ</td>
+                                <td class="textAlingRight">{{ item.gramos }}</td>
+                                <td class="textAlingRight" *ngIf="rep_costosProductos">{{ item.costoT | currency }}</td>
+                                <td class="textAlingRight">{{ item.importeT | currency }}</td>
+                                <td class="textAlingLeft">{{ item.sucursalDesc }}</td>
+                                <td class="textAlingLeft">{{ item.familyDesc }}</td>
+                                <td class="textAlingLeft">{{ item.groupDesc }}</td>
+                                <td class="textAlingLeft">{{ item.qualityDesc }}</td>
+                                <td class="textAlingLeft">{{ item.originDesc }}</td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+                <app-pagination *ngIf="catlist" [IPagination]="pagination"
+                                (OPagination)="changePagination($event)">
+                </app-pagination>
+
+            </div>
+    </div>
+
+</div>
+
+<app-spinner [hidden]="!bShowSpinner"></app-spinner>
