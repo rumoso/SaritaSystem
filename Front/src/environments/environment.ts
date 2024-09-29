@@ -7,7 +7,7 @@ export const environment = {
     iconApp: 'assets/img/icons/SaritaIcon.jpeg',
 
     baseUrl: 'http://192.168.1.2:8083',// OFICINA GUAMUCHIL
-    //baseUrl: 'http://127.0.0.1:8082',
+    //baseUrl: 'http://127.0.0.1:8083',
 
     idSucursal: 1
   };

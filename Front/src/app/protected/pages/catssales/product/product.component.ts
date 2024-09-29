@@ -119,7 +119,7 @@ export class ProductComponent implements OnInit {
       active: true,
       addInv: 1,
       idUser: 0,
-      bImprimir: true
+      bImprimir: false
     };
 
     async ngOnInit() {
@@ -200,7 +200,7 @@ export class ProductComponent implements OnInit {
       this.productForm.originDesc = '';
       this.productForm.active = true;
       this.productForm.addInv = 1;
-      this.productForm.bImprimir = true;
+      this.productForm.bImprimir = false;
 
       setTimeout (() => {
 
@@ -716,13 +716,13 @@ export class ProductComponent implements OnInit {
 
   async ev_PrintTicket(){
     if(this.productForm.bImprimir && this.productForm.addInv > 0){
-      this.printTicketServ.printTicket("codigoBarras", this.productForm.idProduct, this.selectPrinter.idPrinter, this.productForm.addInv);
+      //this.printTicketServ.printTicket("codigoBarras", this.productForm.idProduct, this.selectPrinter.idPrinter, this.productForm.addInv);
     }
   }
 
   async ev_PrintTicketBtn(){
     if(this.productForm.addInv > 0){
-      this.printTicketServ.printTicket("codigoBarras", this.productForm.idProduct, this.selectPrinter.idPrinter, this.productForm.addInv);
+      //this.printTicketServ.printTicket("codigoBarras", this.productForm.idProduct, this.selectPrinter.idPrinter, this.productForm.addInv);
     }
   }
 
