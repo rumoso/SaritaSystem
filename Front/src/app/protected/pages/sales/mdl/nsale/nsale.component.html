@@ -65,7 +65,7 @@
                     </span>
                     <span class="material-icons manitaSobre colorGreen"
                         (click)="showCustomerCat( salesHeaderForm.idCustomer )"
-                        *ngIf="salesHeaderForm.idCustomer > 0">
+                        *ngIf="salesHeaderForm.idCustomer > 0 && salesHeaderForm.idCustomer != 1160">
                         edit
                     </span>
                     <mat-form-field
@@ -142,15 +142,14 @@
 
                     <div class="row" *ngIf="salesHeaderForm.idSaleType == 5 || salesHeaderForm.idSaleType == 6">
 
-                        <div class="row" style="margin-top: -15px;">
-                            <div class="col-md-12">
-                                <div class="badge bg-primary text-wrap" style="font-size: 15px;">
-                                    Taller
-                                </div>
+                      <div class="row" style="margin-top: -15px;">
+                        <div class="col-md-12">
+                            <div class="badge bg-primary text-wrap" style="font-size: 15px;">
+                                Taller
                             </div>
                         </div>
-
-                        <div class="col-md-10">
+                      </div>
+                        <div class="col-md-7">
                             <mat-form-field class="example-full-width with100">
                                 <mat-label>Descripción</mat-label>
                                 <textarea id="tbxDescription"
@@ -159,6 +158,15 @@
                                 placeholder="Ingrese una descripción"
                                 [(ngModel)]="salesDetailForm.description"></textarea>
                             </mat-form-field>
+                        </div>
+
+                        <div class="col-md-3" style="text-align: center;">
+                          <mat-form-field class="">
+                          <mat-label>Fecha de entrega:</mat-label>
+                          <input class="textAlingCenter" matInput [matDatepicker]="picker" placeholder="Seleccione una fecha" [(ngModel)]="salesHeaderForm.fechaEntrega">
+                          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                          <mat-datepicker #picker></mat-datepicker>
+                          </mat-form-field>
                         </div>
 
                         <div class="col-md-2">
@@ -176,13 +184,13 @@
 
                     <div class="row" *ngIf="salesHeaderForm.idSale.length == 0 && salesHeaderForm.idSaleType != 5">
 
-                        <div class="row" style="margin-top: -15px;" *ngIf="salesHeaderForm.idSaleType == 6">
-                            <div class="col-md-12">
-                                <div class="badge bg-primary text-wrap" style="font-size: 15px;">
-                                    Producto
-                                </div>
+                      <div class="row" style="margin-top: -15px;" *ngIf="salesHeaderForm.idSaleType == 6">
+                        <div class="col-md-12">
+                            <div class="badge bg-primary text-wrap" style="font-size: 15px;">
+                                Producto
                             </div>
                         </div>
+                      </div>
 
                         <div class="col-md-4">
                             <mat-form-field fxLayout.xs="column" class="with100">
@@ -255,9 +263,7 @@
                                 #precioUnitario
                                 class="textAlingRight"
                                 [(ngModel)]="salesDetailForm.precioUnitario"
-                                (click)="fn_habilitarPrice()"
-                                (keyup.enter)="ev_fn_cbxPrecio_keyup_enter($event)"
-                                [readOnly]="!isPrecioUnitarioEditable">
+                                (keyup.enter)="ev_fn_cbxPrecio_keyup_enter($event)">
                             </mat-form-field>
                         </div>
 

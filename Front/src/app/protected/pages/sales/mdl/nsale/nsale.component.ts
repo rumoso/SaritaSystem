@@ -94,6 +94,7 @@ export class NsaleComponent {
     total: 0,
     pendingAmount: 0,
     pagado: 0,
+    fechaEntrega: 0,
 
     saleDetail: [],
     paymentList: [],
@@ -547,6 +548,7 @@ export class NsaleComponent {
 
             this.salesHeaderForm.idSaleType = resp.data.idSaleType;
             this.salesHeaderForm.saleTypeDesc = resp.data.saleTypeDesc;
+            this.salesHeaderForm.fechaEntrega = resp.data.fechaEntrega ? resp.data.fechaEntrega + 'T10:27:51.000Z' : '';
 
             this.salesHeaderForm.pendingAmount = resp.data.pendingAmount;
             this.salesHeaderForm.pagado = resp.data.pagado;
@@ -965,6 +967,11 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
                           next: (resp: ResponseDB_CRUD) => {
 
                             if( resp.status === 0 ){
+                              debugger;
+
+                              if(!(this.idSale > 0))
+                                this.ev_PrintTicketEncuesta(resp.insertID);
+
                               this.idSale = resp.insertID;
                               this.salesHeaderForm.idSale = resp.insertID;
 
@@ -1014,6 +1021,10 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
                     next: (resp: ResponseDB_CRUD) => {
 
                       if( resp.status === 0 ){
+debugger;
+                        if(!(this.idSale > 0))
+                          this.ev_PrintTicketEncuesta(resp.insertID);
+
                         this.idSale = resp.insertID;
                         this.salesHeaderForm.idSale = resp.insertID;
 
@@ -1144,6 +1155,7 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
     this.salesHeaderForm.customerResp = '';
     this.salesHeaderForm.idSaleType = 0;
     this.salesHeaderForm.saleTypeDesc = '';
+    this.salesHeaderForm.fechaEntrega = '';
     this.salesHeaderForm.total = 0;
 
     this.salesHeaderForm.pendingAmount = 0;
@@ -1375,6 +1387,7 @@ ev_fnShowBtnAddSaleDetail(): boolean {
   if(
     (
       ( this.salesHeaderForm.idSaleType == 5 || this.salesHeaderForm.idSaleType == 6 )
+
       && this.salesDetailForm.description.length > 0
       && this.salesDetailForm.precioSobre > 0
       && this.salesHeaderForm?.saleDetail?.length == 0
@@ -1522,6 +1535,10 @@ ev_showInterface(){
 
 async ev_PrintTicket(){
   this.printTicketServ.printTicket("Venta", this.idSale, this.selectPrinter.idPrinter, 1);
+}
+
+async ev_PrintTicketEncuesta(idSale: any){
+  this.printTicketServ.printTicket("calification", idSale, this.selectPrinter.idPrinter, 1);
 }
 
 async ev_PrintTicketConsHistoryList(){

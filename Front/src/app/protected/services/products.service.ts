@@ -116,10 +116,11 @@ export class ProductsService {
       , idGroup: parametersForm.idGroup
       , idQuality: parametersForm.idQuality
       , idOrigin: parametersForm.idOrigin
+      , iConInventario: parametersForm.iConInventario
 
-      ,search: pagination.search
-      ,start: start
-      ,limiter: limiter
+      , search: pagination.search
+      , start: start
+      , limiter: limiter
     };
 
     return this.http.post<ResponseGet>( `${ this.baseURL }/${ this._api }/getInventaryListWithPage`, data);
@@ -343,6 +344,14 @@ export class ProductsService {
     data.idSucursalLogON = this.idSucursal;
 
     return this.http.post<ResponseDB_CRUD>( `${ this.baseURL }/${ this._api }/updateFirmaDevoluInventario`, data );
+  }
+
+  CCancelDevolution( data : any ): Observable<ResponseDB_CRUD> {
+
+    data.idUserLogON = this.authServ.getIdUserSession();
+    data.idSucursalLogON = this.idSucursal;
+
+    return this.http.post<ResponseDB_CRUD>( `${ this.baseURL }/${ this._api }/cancelDevolution`, data );
   }
 
 }

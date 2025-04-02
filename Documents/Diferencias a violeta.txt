@@ -1,0 +1,4 @@
+1.- En productos:
+- Que no se genere código de barras ni se imprima
+
+2.- Que se pueda cambiar el precio del producto sin código de autorización
