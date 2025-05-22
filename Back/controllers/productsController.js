@@ -897,6 +897,7 @@ const verifyPhysicalInventoryDetail = async(req, res) => {
     const {
         idPhysicalInventory,
         barCode,
+        cantidad = 1,
 
         idUserLogON,
         idSucursalLogON
@@ -909,6 +910,7 @@ const verifyPhysicalInventoryDetail = async(req, res) => {
         var OSQL = await dbConnection.query(`call verifyPhysicalInventoryDetail(
         '${ idPhysicalInventory }'
         , '${ barCode }'
+        , '${ cantidad }'
 
         , ${ idUserLogON }
         )`)
