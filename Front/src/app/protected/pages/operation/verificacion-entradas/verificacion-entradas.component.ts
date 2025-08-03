@@ -9,6 +9,7 @@ import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 import { ActionAuthorizationComponent } from '../../security/users/mdl/action-authorization/action-authorization.component';
 import { ColumnFormat } from 'src/app/protected/interfaces/global.interfaces';
+import { PrinterPDFService } from 'src/app/protected/services/printer-pdf.service';
 
 @Component({
   selector: 'app-verificacion-entradas',
@@ -64,6 +65,7 @@ export class VerificacionEntradasComponent {
     , @Inject(MAT_DATE_LOCALE) private _locale: string
 
     , private authServ: AuthService
+    , private printerServ: PrinterPDFService
     ) { }
 
     async ngOnInit() {
@@ -77,62 +79,94 @@ export class VerificacionEntradasComponent {
       this.fn_getInventarylogParaFirmar();
     }
 
-// #region MÉTODOS PARA EL FRONT
+  // #region MÉTODOS PARA EL FRONT
 
-exportDataToExcel( bCostos: boolean ): void {
+  exportDataToExcel( bCostos: boolean ): void {
 
-  this.bShowSpinner = true;
+    this.bShowSpinner = true;
 
-  var Newpagination: Pagination = {
-    search:'',
-    length: 10000000,
-    pageSize: 10000000,
-    pageIndex: 0,
-    pageSizeOptions: [5, 10, 25, 100]
+    var Newpagination: Pagination = {
+      search:'',
+      length: 10000000,
+      pageSize: 10000000,
+      pageIndex: 0,
+      pageSizeOptions: [5, 10, 25, 100]
+    }
+
+    this.productsServ.CGetInventarylogParaFirmar( Newpagination, this.parametersForm )
+    .subscribe({
+      next: (resp: ResponseGet) => {
+        console.log(resp)
+
+        if(resp.status == 0){
+
+            const columnFormats: ColumnFormat[] = [
+              { col: 0, currencyFormat: false, textAlignment: 'left' },
+              { col: 1, currencyFormat: false, textAlignment: 'left' },
+              { col: 2, currencyFormat: false, textAlignment: 'left' },
+              { col: 3, numberFormat: '#,##0', textAlignment: 'right' },
+            ];
+
+            var NewObj = resp.data.rows.map((originalItem: any) => {
+              return {
+                '# Entrada': originalItem.noEntrada,
+                'Código de barras': originalItem.barCode,
+                'Nombre': originalItem.productName,
+                'Cantidad': originalItem.cantidad,
+              };
+            });
+
+            const currentDateTime = new Date();
+            const formattedDateTime = currentDateTime.toISOString().replace(/[:.]/g, '-');
+
+            this.servicesGServ.exportToExcel(NewObj, `RepInventarioConCostos_${formattedDateTime}.xlsx`, columnFormats);
+
+        }
+
+        this.bShowSpinner = false;
+
+      },
+      error: (ex: HttpErrorResponse) => {
+        console.log( ex )
+        this.servicesGServ.showSnakbar( ex.error.data );
+        this.bShowSpinner = false;
+      }
+    })
+
+
   }
 
-  this.productsServ.CGetInventarylogParaFirmar( Newpagination, this.parametersForm )
-  .subscribe({
-    next: (resp: ResponseGet) => {
-      console.log(resp)
+  exportDataToPDF(): void {
 
-      if(resp.status == 0){
+    this.bShowSpinner = true;
 
-          const columnFormats: ColumnFormat[] = [
-            { col: 0, currencyFormat: false, textAlignment: 'left' },
-            { col: 1, currencyFormat: false, textAlignment: 'left' },
-            { col: 2, currencyFormat: false, textAlignment: 'left' },
-            { col: 3, numberFormat: '#,##0', textAlignment: 'right' },
-          ];
-
-          var NewObj = resp.data.rows.map((originalItem: any) => {
-            return {
-              '# Entrada': originalItem.noEntrada,
-              'Código de barras': originalItem.barCode,
-              'Nombre': originalItem.productName,
-              'Cantidad': originalItem.cantidad,
-            };
-          });
-
-          const currentDateTime = new Date();
-          const formattedDateTime = currentDateTime.toISOString().replace(/[:.]/g, '-');
-
-          this.servicesGServ.exportToExcel(NewObj, `RepInventarioConCostos_${formattedDateTime}.xlsx`, columnFormats);
-
-      }
-
-      this.bShowSpinner = false;
-
-    },
-    error: (ex: HttpErrorResponse) => {
-      console.log( ex )
-      this.servicesGServ.showSnakbar( ex.error.data );
-      this.bShowSpinner = false;
+    var Newpagination: Pagination = {
+      search:'',
+      length: 10000000,
+      pageSize: 10000000,
+      pageIndex: 0,
+      pageSizeOptions: [5, 10, 25, 100]
     }
-  })
+
+    this.productsServ.CGetInventarylogParaFirmar( Newpagination, this.parametersForm )
+    .subscribe({
+      next: (resp: ResponseGet) => {
+
+        if(resp.status == 0){
+          this.printerServ.generarPDFVerificacionEntradas( this.parametersForm, resp.data.rows );
+        }
+        this.bShowSpinner = false;
+
+      },
+      error: (ex: HttpErrorResponse) => {
+        console.log( ex )
+        this.servicesGServ.showSnakbar( ex.error.data );
+        this.bShowSpinner = false;
+      }
+    })
 
 
-}
+  }
 
     ////************************************************ */
     // MÉTODOS DE PAGINACIÓN
