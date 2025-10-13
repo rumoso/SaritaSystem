@@ -6,6 +6,7 @@ import { ResponseGet } from 'src/app/interfaces/general.interfaces';
 import { ResponseDB_CRUD } from 'src/app/protected/interfaces/global.interfaces';
 import { ActionsService } from 'src/app/protected/services/actions.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
+import { ActionsectionComponent } from '../actionsection/actionsection.component';
 
 @Component({
   selector: 'app-actionsconf',
@@ -113,6 +114,18 @@ export class ActionsconfComponent {
 // #endregion
 
 // #region MÉTODOS DEL FRONT
+
+showActionSection(){
+
+    this.servicesGServ.showModalWithParams( ActionsectionComponent, null, '1500px')
+    .afterClosed().subscribe({
+      next: ( resp: any ) =>{
+
+        this.fn_getAllActionsByPermission();
+
+      }
+    });
+  }
 
   getSelectedPermission() {
 

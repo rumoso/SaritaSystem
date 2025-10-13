@@ -43,6 +43,9 @@ export class ProductComponent implements OnInit {
 
   inventaryLoglist: any[] = [];
 
+  prod_EditGrupos: boolean = false;
+  prod_EditFamilias: boolean = false;
+
   //-------------------------------
   // VARIABLES PARA LA PAGINACIÓN
   iRows: number = 0;
@@ -130,6 +133,10 @@ export class ProductComponent implements OnInit {
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();
 
+      var oActions = await this.authServ.CGetActionsPermissionPromise( this.idUserLogON );
+      this.prod_EditGrupos = oActions.some( ( action: any ) => action.name === 'prod_EditGrupos');
+      this.prod_EditFamilias = oActions.some( ( action: any ) => action.name === 'prod_EditFamilias');
+
       this.fn_getSelectPrintByIdUser( this.idUserLogON );
 
       this._locale = 'mx';
@@ -175,6 +182,8 @@ export class ProductComponent implements OnInit {
                 addInv: 1,
                 idUser: this.idUserLogON
               };
+
+              console.log(this.productForm)
 
 
               this.fn_getInventarylogByIdProductWithPage();
@@ -262,7 +271,7 @@ export class ProductComponent implements OnInit {
       && this.productForm.barCode.length > 0
       && this.productForm.name.length > 0
       && this.productForm.cost >= 0
-      && this.productForm.price > 0){
+      && this.productForm.price > 0 ){
         bOK = true;
       }
 
