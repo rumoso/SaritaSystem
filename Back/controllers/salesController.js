@@ -4,6 +4,7 @@ const moment = require('moment');
 const { Sequelize } = require('sequelize');
 
 const { dbConnection } = require('../database/config');
+const { validarPisoCosto } = require('../helpers/validar-piso-costo');
 
 const insertSale = async(req, res) => {
 
@@ -31,8 +32,19 @@ const insertSale = async(req, res) => {
 
     try{
 
+        // Piso de costo + 30%: se valida ANTES de abrir la venta, para no
+        // dejar un encabezado a medias si alguna línea viene mal.
+        const oValidacionPiso = await validarPisoCosto( saleDetail );
+
+        if( !oValidacionPiso.bOK ){
+            return res.json({
+                status: 1,
+                message: oValidacionPiso.message
+            });
+        }
+
         if( idSucursalLogON > 0 ){
-        
+
             var OSQL = await dbConnection.query(`call insertSale(
             '${oGetDateNow}'
             , ${ idSucursalLogON }
@@ -548,8 +560,19 @@ const insertSaleByConsignation = async(req, res) => {
     var bBorro = 0;
 
     const oGetDateNow = moment().format('YYYY-MM-DD HH:mm:ss');
-  
+
     try{
+
+        // Mismo piso de costo + 30% que en insertSale: la consignación
+        // también termina en una venta real.
+        const oValidacionPiso = await validarPisoCosto( saleDetail );
+
+        if( !oValidacionPiso.bOK ){
+            return res.json({
+                status: 1,
+                message: oValidacionPiso.message
+            });
+        }
 
         new Promise((resolve, reject) => {
 

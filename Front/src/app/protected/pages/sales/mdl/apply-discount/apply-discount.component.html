@@ -1,0 +1,169 @@
+<div class="ns-modal">
+
+    <!-- Encabezado -->
+    <div class="ns-header">
+        <div class="ns-header-titulo">
+            <h2 class="ns-titulo">{{ title }}</h2>
+            <span class="ns-chip ns-chip-folio">Total: {{ nTotalOriginal | currency }}</span>
+            <span class="ns-chip ns-chip-pagado" *ngIf="bCalculado && nDescuentoAplicado > 0">
+                Descuento: {{ nDescuentoAplicado | currency }}
+            </span>
+        </div>
+
+        <button mat-icon-button (click)="fn_CerrarMDL()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Advertencia de nota mixta -->
+    <div class="ad-aviso ad-aviso--warn" *ngIf="bNotaMixta">
+        <b>Esta nota mezcla productos y taller.</b>
+        Las líneas de taller no tienen precio mínimo, así que pueden absorber todo el
+        descuento que los productos no alcancen a tomar. Revisa el reparto antes de aplicarlo.
+    </div>
+
+    <!-- Captura del descuento -->
+    <div class="ns-seccion">
+        <div class="ns-seccion-titulo">Descuento</div>
+
+        <div class="ns-grid">
+
+            <div class="ns-slim-field ns-col-3">
+                <label class="ns-slim-label">Monto del descuento</label>
+                <input #tbxMonto
+                    type="text"
+                    inputmode="decimal"
+                    appDecimalNumber
+                    class="ns-slim-input ad-input textAlingRight"
+                    placeholder="0.00"
+                    [(ngModel)]="montoDescuento"
+                    (ngModelChange)="fn_aplicarMonto()">
+                <span class="ad-ayuda">Se reparte entre los productos de la nota en proporción a su importe.</span>
+            </div>
+
+            <div class="ns-slim-field ns-col-3">
+                <label class="ns-slim-label">% de descuento</label>
+                <input #tbxPorcentaje
+                    type="text"
+                    inputmode="decimal"
+                    appDecimalNumber
+                    class="ns-slim-input ad-input textAlingRight"
+                    placeholder="0"
+                    [(ngModel)]="porcentajeDescuento"
+                    (ngModelChange)="fn_aplicarPorcentajeDescuento()">
+                <span class="ad-ayuda">Le baja ese porcentaje al precio de cada producto.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Tipos de precio del catálogo -->
+    <div class="ns-seccion">
+        <div class="ns-seccion-titulo">Elige un tipo de precio</div>
+
+        <div class="ad-cards">
+
+            <span class="ad-sin-datos" *ngIf="aDescuentos.length == 0">
+                No hay tipos de precio configurados.
+            </span>
+
+            <div class="ad-card"
+                *ngFor="let item of aDescuentos"
+                [class.ad-card--activa]="oDescuentoSeleccionado?.idDiscountCatalog == item.idDiscountCatalog"
+                (click)="fn_aplicarTipoPrecio( item )">
+                {{ item.name }}
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="ns-seccion" *ngIf="bCalculado">
+        <div class="ns-seccion-titulo">Resultado</div>
+
+        <div class="ad-resumen">
+            <div class="ad-resumen-fila">
+                <span>Total antes del descuento</span>
+                <span>{{ nTotalOriginal | currency }}</span>
+            </div>
+            <div class="ad-resumen-fila ad-resumen-fila--verde">
+                <span>Descuento aplicado</span>
+                <span>- {{ nDescuentoAplicado | currency }}</span>
+            </div>
+            <div class="ad-resumen-fila ad-resumen-fila--roja" *ngIf="nDescuentoSolicitado - nDescuentoAplicado > 0.005">
+                <span>Descuento que no se pudo aplicar</span>
+                <span>{{ nDescuentoSolicitado - nDescuentoAplicado | currency }}</span>
+            </div>
+            <div class="ad-resumen-fila ad-resumen-fila--total">
+                <span>Nuevo total de la nota</span>
+                <span>{{ nTotalNuevo | currency }}</span>
+            </div>
+        </div>
+
+        <!-- Aviso consolidado -->
+        <div class="ad-aviso ad-aviso--error" *ngIf="aAvisos.length > 0">
+            <b>Algunos productos no recibieron el descuento completo:</b>
+            <ul>
+                <li *ngFor="let aviso of aAvisos">{{ aviso }}</li>
+            </ul>
+        </div>
+
+        <div class="ad-aviso ad-aviso--error" *ngIf="nDescuentoAplicado <= 0.005">
+            <b>No se pudo aplicar el descuento a ningún producto de la nota.</b>
+            La nota se queda igual.
+        </div>
+
+        <div class="table-responsive">
+            <table class="ns-tabla">
+                <thead>
+                    <tr>
+                        <th class="textAlingLeft">Producto</th>
+                        <th class="textAlingRight">Cant.</th>
+                        <th class="textAlingRight">Precio antes</th>
+                        <th class="textAlingRight">Descuento</th>
+                        <th class="textAlingRight">Precio nuevo</th>
+                        <th class="textAlingRight">Importe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of aResultado; let i = index">
+                        <td class="textAlingLeft">{{ item.productDesc }}</td>
+                        <td class="textAlingRight">{{ item.cantidad }}</td>
+                        <td class="textAlingRight">{{ aLineas[i].precio | currency }}</td>
+                        <td class="textAlingRight colorGreen">{{ (aLineas[i].precio - item.precio) | currency }}</td>
+                        <td class="textAlingRight">{{ item.precio | currency }}</td>
+                        <td class="textAlingRight">{{ item.importe | currency }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="ns-acciones">
+
+        <button mat-raised-button
+        color="primary"
+        type="submit"
+        (click)="fn_aplicar()"
+        [disabled]="!fn_puedeAplicar()">
+        <mat-icon matPrefix class="my-icon">check</mat-icon>
+        Aplicar descuento</button>
+
+        <button mat-raised-button
+        type="button"
+        (click)="fn_limpiar()">
+        <mat-icon matPrefix class="my-icon">clear</mat-icon>
+        Limpiar</button>
+
+        <button mat-raised-button
+        type="button"
+        (click)="fn_CerrarMDL()">
+        <mat-icon matPrefix class="my-icon">close</mat-icon>
+        Cancelar</button>
+
+    </div>
+
+</div>
+
+<app-spinner [hidden]="!bShowSpinner"></app-spinner>

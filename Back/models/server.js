@@ -33,6 +33,7 @@ class Server{
             suppliers:'/api/suppliers',
             comisiones:'/api/comisiones',
             finanzas:'/api/finanzas',
+            discountCatalog:'/api/discountCatalog',
 
         }
 
@@ -118,6 +119,7 @@ class Server{
         this.app.use(this.paths.suppliers, require('../routes/suppliersRoute'));
         this.app.use(this.paths.comisiones, require('../routes/comisionesRoute'));
         this.app.use(this.paths.finanzas, require('../routes/finanzasRoute'));
+        this.app.use(this.paths.discountCatalog, require('../routes/discountCatalogRoute'));
     }
 
     listen(){

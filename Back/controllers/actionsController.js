@@ -244,56 +244,59 @@ const insertActionsPermisionsByIdRelation = async(req, res) => {
         }));
 
         if( jsonList.length == 0 ){
-            res.json({
+            await connection.rollback();
+            return res.json({
                 status: 1,
                 message: "No se guardaron los permisos."
             });
-        }else{
-
-            const jsonString = JSON.stringify(jsonList, null, 2);
-
-            console.log( `CALL insertUpdateActionsConf(
-                '${ relationType }'
-                , ${ idRelation }
-                , '${ jsonString }'
-                , ${ idUserLogON }
-                )` )
-                    
-            var oSQL = await connection.query(`CALL insertUpdateActionsConf(
-                '${ relationType }'
-                , ${ idRelation }
-                , '${ jsonString }'
-                , ${ idUserLogON }
-                )`);
-
-            var oSQL = oSQL[0][0];
-            console.log( oSQL )
-
-            if(oSQL[0].out_id == 0){
-                await connection.rollback();
-                connection.release();
-                return res.json({
-                    status: 2,
-                    message: 'No pudieron guardar los permisos'
-                });
-            }else if(oSQL[0].out_id > 0){
-                await connection.commit();
-                connection.release();
-                res.json({
-                    status: 0,
-                    message: "Permisos guardados con éxito.",
-                });
-            }
         }
+
+        const jsonString = JSON.stringify(jsonList, null, 2);
+
+        var oSQL = await connection.query(`CALL insertUpdateActionsConf(
+            '${ relationType }'
+            , ${ idRelation }
+            , '${ jsonString }'
+            , ${ idUserLogON }
+            )`);
+
+        var oSQL = oSQL[0][0];
+
+        if(oSQL[0].out_id == 0){
+
+            await connection.rollback();
+
+            // El SP trae el motivo real en `message` (su EXIT HANDLER
+            // captura ahí el error de MySQL). Antes se descartaba y se
+            // mandaba un texto genérico, lo que dejó oculto durante
+            // mucho tiempo un error de "Field doesn't have a default
+            // value". Si viene mensaje, se muestra.
+            return res.json({
+                status: 2,
+                message: oSQL[0].message && oSQL[0].message.length > 0
+                    ? 'No pudieron guardar los permisos: ' + oSQL[0].message
+                    : 'No pudieron guardar los permisos'
+            });
+        }
+
+        await connection.commit();
+
+        res.json({
+            status: 0,
+            message: "Permisos guardados con éxito.",
+        });
 
     }catch(error){
         await connection.rollback();
-        connection.release();
         res.json({
             status: 2,
             message: "Sucedió un error inesperado",
             data: error.message
         });
+    }finally{
+        // Siempre, pase lo que pase: si no, cada error deja una conexión
+        // colgada y se acaba agotando el pool.
+        connection.release();
     }
 }
 

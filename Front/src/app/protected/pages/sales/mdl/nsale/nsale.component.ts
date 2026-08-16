@@ -21,6 +21,7 @@ import { PrintTicketService } from 'src/app/protected/services/print-ticket.serv
 import { ActionAuthorizationComponent } from '../../../security/users/mdl/action-authorization/action-authorization.component';
 import { QuestionCancelPaymentComponent } from '../question-cancel-payment/question-cancel-payment.component';
 import { AuthorizationActionService } from 'src/app/protected/services/authorization-action.service';
+import { ApplyDiscountComponent } from '../apply-discount/apply-discount.component';
 
 @Component({
   selector: 'app-nsale',
@@ -212,9 +213,30 @@ export class NsaleComponent {
         this.fn_getAutorizacionesByRelation( this.ODataP.idSale );
 
       }
+      else{
+        // Venta nueva: casi siempre es de contado a público general, así
+        // que se precarga eso y el cajero solo escoge vendedor y pasa
+        // directo al código de barras. Si esta venta es la excepción,
+        // hace clic en Cliente o Tipo de venta y los cambia.
+        this.fn_precargarVentaDeContado();
+      }
 
       this.selectCajas = this.ODataP.selectCajas;
       this.selectPrinter = this.ODataP.selectPrinter;
+
+    }
+
+    // Valores por defecto de una venta nueva: contado y público general.
+    // Los ids son los del catálogo (sales_type 2 = Contado,
+    // customers 1160 = Publico En General).
+    fn_precargarVentaDeContado(){
+
+      this.salesHeaderForm.idSaleType = 2;
+      this.salesHeaderForm.saleTypeDesc = 'Contado';
+
+      this.salesHeaderForm.idCustomer = 1160;
+      this.salesHeaderForm.customerDesc = 'Publico En General - 0000000000 - Guamuchil';
+      this.salesHeaderForm.customerResp = '';
 
     }
 
@@ -242,6 +264,53 @@ export class NsaleComponent {
 
     hasPermissionAction( action: string ): boolean{
       return this.authServ.hasPermissionAction(action);
+    }
+
+    // ---------------------------------------------------------------
+    // DESCUENTO SOBRE LA NOTA DE VENTA
+    // Análisis: SaritaPlan/analisis/001-descuentos-nota-venta.md
+    //
+    // El modal calcula y regresa las líneas ya ajustadas; aquí solo se
+    // reemplazan y se recalculan los totales de la nota.
+    // ---------------------------------------------------------------
+    fn_openApplyDiscount(){
+
+      if( !this.salesHeaderForm?.saleDetail?.length ){
+        return;
+      }
+
+      const oParams: any = {
+        saleDetail: this.salesHeaderForm.saleDetail
+      };
+
+      this.servicesGServ.showModalWithParams( ApplyDiscountComponent, oParams, '1200px')
+      .afterClosed().subscribe({
+        next: ( resp: any ) =>{
+
+          if( resp && resp.bAplicado ){
+
+            this.salesHeaderForm.saleDetail = resp.saleDetail;
+
+            // Recalcular totales de la nota con los importes nuevos.
+            this.salesHeaderForm.total = this.salesHeaderForm.saleDetail
+              .reduce((sum: any, x: any) => sum + x.importe, 0);
+            this.salesHeaderForm.pendingAmount = this.salesHeaderForm.total;
+
+            // Mostrar las columnas de precio unitario y descuento, que
+            // solo aparecen cuando la nota trae algún descuento.
+            const sumDescuento = this.salesHeaderForm.saleDetail
+              .reduce((sum: any, x: any) => sum + ( x.descuento || 0 ), 0);
+            this.interface.showDescuento = sumDescuento > 0;
+
+            this.servicesGServ.showAlert('S', 'OK!'
+              , 'Descuento aplicado: $' + resp.nDescuentoAplicado.toFixed(2)
+              , true);
+
+          }
+
+        }
+      });
+
     }
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // SECCIÓN DE CONEXIONES AL BACK
@@ -809,7 +878,17 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
 
             var importe = precio * this.salesDetailForm.cantidad;
 
-            //if(precio > this.salesDetailForm.costPlusPorcent){
+            // PISO DE COSTO + 30%: ningún producto con costo puede bajar
+            // de costPlusPorcent (ya viene calculado de la BD).
+            // El precio de lista gana sobre el piso: si el producto ya se
+            // vende por debajo de su piso (costo mal capturado), su límite
+            // es su propio precio, no el piso — así no se traba su venta
+            // normal, solo se le impide recibir descuento.
+            var precioMinimo = this.salesDetailForm.costPlusPorcent > 0
+              ? Math.min( this.salesDetailForm.costPlusPorcent, this.salesDetailForm.precioUnitario )
+              : 0;
+
+            if( precio >= ( precioMinimo - 0.005 ) ){
 
               var saleDetail:any = {
                 select: false,
@@ -838,9 +917,12 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
 
               this.fnClearSalesDetailForm();
 
-            // }else{
-            //   this.servicesGServ.showAlert('W', 'Alerta!', "No se puede aplicar tanto descuento.", false);
-            // }
+            }else{
+              this.servicesGServ.showAlert('W', 'Alerta!'
+              , '"' + this.salesDetailForm.productDesc + '" no puede venderse en $' + precio.toFixed(2)
+              + ', su precio mínimo permitido es $' + precioMinimo.toFixed(2) + '.'
+              , false);
+            }
 
 
           }else{
@@ -1202,6 +1284,12 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
     this.dataStone.total = 0;
     this.dataStone.pendingAmount = 0;
     this.dataStone.pagado = 0;
+
+    // Misma precarga que al abrir la pantalla: contado y público
+    // general, para que la siguiente venta arranque igual de rápido.
+    this.fn_precargarVentaDeContado();
+
+    this.nextInputFocus( this.cbxSellerCBX, 500 );
   }
 
   fn_CrearVentaApartirDeConsignacion( idSaleType: number ){
@@ -1785,7 +1873,21 @@ async ev_PrintTicketConsHistoryList(){
       this.salesHeaderForm.sellerDesc = ODataCbx.name;
       this.salesHeaderForm.sellerResp = '';
 
-      this.nextInputFocus( this.cbxCustomerCBX, 500 );
+      // Del vendedor se salta DIRECTO al código de barras: cliente y
+      // tipo de venta ya vienen precargados (contado / público general),
+      // que es el caso normal. Si hay que cambiarlos, el usuario hace
+      // clic en ellos y de ahí el foco sigue el camino de siempre
+      // (cliente -> tipo de venta -> código de barras).
+      // En taller/cotización no aplica: ahí se captura descripción.
+      if( this.salesHeaderForm.idSaleType == 5 || this.salesHeaderForm.idSaleType == 6 ){
+        setTimeout (() => {
+          var miInput = document.getElementById('tbxDescription');
+          miInput?.focus();
+        }, 500);
+      }
+      else{
+        this.nextInputFocus( this.barCode, 500 );
+      }
 
     }, 1);
 

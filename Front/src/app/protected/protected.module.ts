@@ -60,6 +60,8 @@ import { InfFinancieraComponent } from './pages/finanzas/inf-financiera/inf-fina
 import { InventaryLogComponent } from './pages/sales/mdl/inventary-log/inventary-log.component';
 import { ActionsectionComponent } from './pages/security/mdl/actionsection/actionsection.component';
 import { ActionComponent } from './pages/security/mdl/action/action.component';
+import { CatdescuentosComponent } from './pages/settings/catdescuentos/catdescuentos.component';
+import { ApplyDiscountComponent } from './pages/sales/mdl/apply-discount/apply-discount.component';
 
 @NgModule({
     declarations: [
@@ -116,6 +118,8 @@ import { ActionComponent } from './pages/security/mdl/action/action.component';
     InventaryLogComponent,
     ActionsectionComponent,
     ActionComponent,
+    CatdescuentosComponent,
+    ApplyDiscountComponent,
   ],
     imports: [
         CommonModule,
