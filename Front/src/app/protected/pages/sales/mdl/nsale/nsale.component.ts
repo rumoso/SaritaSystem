@@ -104,6 +104,11 @@ export class NsaleComponent {
 
   };
 
+  // Aviso en línea debajo de "Precio unitario" cuando el precio no
+  // alcanza el piso de costo+30% — antes era una alerta modal con el
+  // nombre del producto, que la hacía muy larga y había que cerrar.
+  sMensajePrecioMinimo: string = '';
+
   salesDetailForm: any = {
     barCode: '',
     idProduct: 0,
@@ -112,6 +117,12 @@ export class NsaleComponent {
 
     cantidad: 1,
     precioUnitario: 0,
+    // Precio de catálogo tal como vino del producto, SIN tocar — sirve de
+    // techo real para el piso de costo+30%. precioUnitario sí se puede
+    // editar (botón "cambiar precio"), así que no es seguro usarlo como
+    // límite: si se usara, editar el precio a algo bajo también bajaría
+    // el propio límite y la validación se anularía a sí misma.
+    precioCatalogo: 0,
     descuento: '',
     descuentoEnPesos: '',
     cost: 0,
@@ -560,6 +571,7 @@ export class NsaleComponent {
                 this.salesDetailForm.cost = resp.data.cost;
                 this.salesDetailForm.costPlusPorcent = parseFloat( ( resp.data.costPlusPorcent ).toFixed(2) );
                 this.salesDetailForm.precioUnitario = resp.data.price;
+                this.salesDetailForm.precioCatalogo = resp.data.price;
 
                 this.salesDetailForm.catInventary = resp.data.catInventary;
 
@@ -577,6 +589,7 @@ export class NsaleComponent {
                 this.salesDetailForm.cost = 0;
                 this.salesDetailForm.costPlusPorcent = 0;
                 this.salesDetailForm.precioUnitario = 0;
+                this.salesDetailForm.precioCatalogo = 0;
 
                 this.salesDetailForm.catInventary = 0;
 
@@ -884,11 +897,24 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
             // vende por debajo de su piso (costo mal capturado), su límite
             // es su propio precio, no el piso — así no se traba su venta
             // normal, solo se le impide recibir descuento.
+            //
+            // OJO: el techo debe ser precioCatalogo (el precio tal como
+            // vino del producto), NUNCA precioUnitario. precioUnitario se
+            // puede editar a mano con el botón "cambiar precio" ("la forma
+            // tradicional" de dar un descuento) — si se usara como techo,
+            // editarlo a un valor bajo también bajaría el propio límite y
+            // la validación se anularía a sí misma, dejando pasar precios
+            // por debajo del piso sin ningún aviso. Bug reportado por el
+            // cliente y corregido aquí.
             var precioMinimo = this.salesDetailForm.costPlusPorcent > 0
-              ? Math.min( this.salesDetailForm.costPlusPorcent, this.salesDetailForm.precioUnitario )
+              ? ( this.salesDetailForm.precioCatalogo > 0
+                  ? Math.min( this.salesDetailForm.costPlusPorcent, this.salesDetailForm.precioCatalogo )
+                  : this.salesDetailForm.costPlusPorcent )
               : 0;
 
             if( precio >= ( precioMinimo - 0.005 ) ){
+
+              this.sMensajePrecioMinimo = '';
 
               var saleDetail:any = {
                 select: false,
@@ -918,10 +944,11 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
               this.fnClearSalesDetailForm();
 
             }else{
-              this.servicesGServ.showAlert('W', 'Alerta!'
-              , '"' + this.salesDetailForm.productDesc + '" no puede venderse en $' + precio.toFixed(2)
-              + ', su precio mínimo permitido es $' + precioMinimo.toFixed(2) + '.'
-              , false);
+              // Sin nombre del producto: ya está claro por contexto (es
+              // la línea que se está capturando) y así el mensaje no se
+              // hace tan largo.
+              this.sMensajePrecioMinimo = 'No puede venderse en $' + precio.toFixed(2)
+                + ', el precio mínimo permitido es $' + precioMinimo.toFixed(2) + '.';
             }
 
 
@@ -968,11 +995,13 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
     }
 
     fnClearSalesDetailForm(){
+      this.sMensajePrecioMinimo = '';
       this.salesDetailForm.idProduct = 0;
       this.salesDetailForm.barCode = '';
       this.salesDetailForm.productDesc = '';
       this.salesDetailForm.cantidad = 1;
       this.salesDetailForm.precioUnitario = 0;
+      this.salesDetailForm.precioCatalogo = 0;
       this.salesDetailForm.descuento = '';
       this.salesDetailForm.descuentoEnPesos = '';
       this.salesDetailForm.cost = 0;
@@ -1262,6 +1291,7 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
     this.salesDetailForm.catInventary = 0;
     this.salesDetailForm.cantidad = 1,
     this.salesDetailForm.precioUnitario = 0;
+    this.salesDetailForm.precioCatalogo = 0;
     this.salesDetailForm.descuento = '';
     this.salesDetailForm.descuentoEnPesos = '';
     this.salesDetailForm.cost = 0;
@@ -1753,6 +1783,7 @@ async ev_PrintTicketConsHistoryList(){
       this.salesDetailForm.cost = ODataCbx.cost;
       this.salesDetailForm.costPlusPorcent = parseFloat( ( ODataCbx.costPlusPorcent ).toFixed(2) );
       this.salesDetailForm.precioUnitario = ODataCbx.price;
+      this.salesDetailForm.precioCatalogo = ODataCbx.price;
       this.salesDetailForm.catInventary = ODataCbx.catInventary;
 
       this.nextInputFocus( this.tbxCantidad, 500);
@@ -1769,6 +1800,7 @@ async ev_PrintTicketConsHistoryList(){
     this.salesDetailForm.productDesc = '';
     this.salesDetailForm.barCode = '';
     this.salesDetailForm.precioUnitario = 0;
+    this.salesDetailForm.precioCatalogo = 0;
     this.salesDetailForm.catInventary = 0;
     this.salesDetailForm.cost = 0;
     this.salesDetailForm.costPlusPorcent = 0;
