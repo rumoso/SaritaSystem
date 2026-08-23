@@ -13,6 +13,7 @@ import { PrintersService } from 'src/app/protected/services/printers.service';
 import { ResponseDB_CRUD } from 'src/app/protected/interfaces/global.interfaces';
 import { CortecajadetailComponent } from '../mdl/cortecajadetail/cortecajadetail.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-cortes-caja',
   templateUrl: './cortes-caja.component.html',
@@ -81,9 +82,17 @@ private servicesGServ: ServicesGService
 , private printTicketServ: PrintTicketService
 , private printersServ: PrintersService
 
-) { }
+
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
 async ngOnInit() {
+    this.pageTitleServ.set('point_of_sale', 'Cortes de Caja', 'Historial de cortes por caja y sucursal');
 
   this.authServ.checkSession();
   this.idUserLogON = await this.authServ.getIdUserSession();

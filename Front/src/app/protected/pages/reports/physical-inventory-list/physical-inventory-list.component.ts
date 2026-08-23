@@ -16,6 +16,7 @@ import { environment } from 'src/environments/environment';
 import { ActionAuthorizationComponent } from '../../security/users/mdl/action-authorization/action-authorization.component';
 import { PhysicalInventoryComponent } from '../physical-inventory/physical-inventory.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-physical-inventory-list',
   templateUrl: './physical-inventory-list.component.html',
@@ -78,9 +79,17 @@ export class PhysicalInventoryListComponent {
     , private sucursalesServ: SucursalesService
 
     , private authServ: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('fact_check', 'Inventario Físico', 'Conteos físicos y sus diferencias');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

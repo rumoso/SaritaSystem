@@ -28,6 +28,7 @@ import { RepPaymentsComponent } from "./pages/reports/rep-payments/rep-payments.
 import { InfFinancieraComponent } from "./pages/finanzas/inf-financiera/inf-financiera.component";
 import { InventaryLogComponent } from "./pages/sales/mdl/inventary-log/inventary-log.component";
 import { CatdescuentosComponent } from "./pages/settings/catdescuentos/catdescuentos.component";
+import { DashboardDirectorComponent } from "./pages/dashboard-director/dashboard-director.component";
 
 const routes: Routes = [
     {
@@ -153,6 +154,13 @@ const routes: Routes = [
         {
           path: 'catDescuentos',
           component: CatdescuentosComponent
+        },
+        {
+          // Panel del director. Pantalla APARTE del dashboard de inicio:
+          // ese sigue siendo el lanzador de menús, este tiene su propio
+          // permiso (`dashboard_VerPanel`) y su propia entrada de menú.
+          path: 'dashboardDirector',
+          component: DashboardDirectorComponent
         },
       ]
     }

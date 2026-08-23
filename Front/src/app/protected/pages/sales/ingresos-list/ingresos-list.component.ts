@@ -10,6 +10,7 @@ import { UsersService } from 'src/app/protected/services/users.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-ingresos-list',
   templateUrl: './ingresos-list.component.html',
@@ -64,9 +65,17 @@ constructor(
   , private salesServ: SalesService
   , private printersServ: PrintersService
   , private printTicketServ: PrintTicketService
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
 async ngOnInit() {
+    this.pageTitleServ.set('attach_money', 'Ingresos', 'Entradas de dinero registradas en caja');
 
   this.authServ.checkSession();
   this.idUserLogON = await this.authServ.getIdUserSession();

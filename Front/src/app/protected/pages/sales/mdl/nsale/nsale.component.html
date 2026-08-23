@@ -224,13 +224,22 @@
 
             <div class="ns-slim-field ns-col-3">
                 <label class="ns-slim-label">Precio unitario</label>
+                <!-- Editable libre: ya no pide código de autorización.
+                     El precio sigue protegido por la validación del piso
+                     de costo+30% al agregar la línea (ver addSaleDetail). -->
+                <!-- Sin currencyMask: se captura el importe como se lee
+                     (250.50), no arrancando desde los centavos — igual
+                     que los campos de Cobrar. La validación del piso
+                     corre en cada tecla, no solo al agregar la línea. -->
                 <input #precioUnitario
+                    type="text"
+                    inputmode="decimal"
+                    appDecimalNumber
                     class="ns-slim-input textAlingRight"
-                    currencyMask placeholder="Ingrese el precio unitario"
+                    placeholder="Ingrese el precio unitario"
                     [(ngModel)]="salesDetailForm.precioUnitario"
-                    (click)="fn_habilitarPrice()"
-                    (keyup.enter)="ev_fn_cbxPrecio_keyup_enter($event)"
-                    [readOnly]="!isPrecioUnitarioEditable">
+                    (focus)="event_fn_SeleccionarTexto( $event )"
+                    (keyup)="ev_fn_cbxPrecio_keyup_enter($event)">
 
                 <!-- Aviso en línea: antes era una alerta modal con el
                      nombre del producto, que la hacía muy larga. -->

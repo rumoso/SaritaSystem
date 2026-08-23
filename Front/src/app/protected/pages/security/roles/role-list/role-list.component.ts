@@ -10,6 +10,7 @@ import { environment } from 'src/environments/environment';
 import { ActionsconfComponent } from '../../mdl/actionsconf/actionsconf.component';
 import { MenupermisosComponent } from '../../mdl/menupermisos/menupermisos.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-role-list',
   templateUrl: './role-list.component.html',
@@ -39,9 +40,17 @@ export class RoleListComponent {
     private servicesGServ: ServicesGService
     , private rolesServ: RolesService
     , private authService: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     ngOnInit(): void {
+    this.pageTitleServ.set('badge', 'Roles', 'Perfiles de permisos del sistema');
       this.authService.checkSession();
       
       this.fn_getRolesListWithPage();

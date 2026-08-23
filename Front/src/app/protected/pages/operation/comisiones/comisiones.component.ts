@@ -13,6 +13,7 @@ import { ComisionComponent } from '../comision/comision.component';
 import { ActionAuthorizationComponent } from '../../security/users/mdl/action-authorization/action-authorization.component';
 import { GenComisionComponent } from '../gen-comision/gen-comision.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-comisiones',
   templateUrl: './comisiones.component.html',
@@ -75,9 +76,17 @@ export class ComisionesComponent {
 
     , private comisionesServ: ComisionesService
     , private userServ: UsersService
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
   async ngOnInit() {
+    this.pageTitleServ.set('paid', 'Comisiones', 'Generación manual de comisiones de venta');
 
     this.authServ.checkSession();
     this.idUserLogON = await this.authServ.getIdUserSession();

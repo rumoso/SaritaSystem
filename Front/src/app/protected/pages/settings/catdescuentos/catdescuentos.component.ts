@@ -8,6 +8,7 @@ import { DiscountCatalogService } from 'src/app/protected/services/discount-cata
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-catdescuentos',
   templateUrl: './catdescuentos.component.html',
@@ -68,9 +69,17 @@ export class CatdescuentosComponent implements OnInit {
 
     , private discountServ: DiscountCatalogService
 
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('sell', 'Catálogo de descuentos', 'Tipos de precio que se aplican en el punto de venta');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

@@ -1,0 +1,791 @@
+<!-- ═══════════════════════════════════════════════
+     PANEL DEL DIRECTOR (SaritaPlan/analisis/002)
+
+     Cinco bloques, en este orden:
+       1. El pulso de hoy
+       2. Quién va adelante (por vendedor)
+       3. Capital dormido (inventario)
+       4. El mes
+       5. Tendencia y ritmo
+
+     Tres reglas de presentación que NO se negocian:
+       - VENDIDO, COBRADO y UTILIDAD GENERADA son tres números
+         distintos y se rotulan como tales; nunca se suman.
+       - Un bloque sin datos dice "sin registros". NUNCA $0.00.
+       - Sin `dashboard_VerCostos` el servidor no manda costos ni
+         utilidad, y aquí tampoco se deja el hueco.
+     ═══════════════════════════════════════════════ -->
+
+<div class="dbp-page">
+
+  <!-- ── Corte y frescura ── -->
+  <div class="dbp-topline">
+
+    <div class="dbp-topline-fecha">
+      <label class="dbp-label">Fecha de corte</label>
+      <input type="date"
+             class="dbp-date"
+             [(ngModel)]="fechaCorte"
+             (change)="ev_fn_cambiarFecha()">
+    </div>
+
+    <div class="dbp-spacer"></div>
+
+    <div class="dbp-sello" *ngIf="sDesdeActualizacion">
+      <span class="dbp-sello-punto"></span>
+      actualizado {{ sDesdeActualizacion }}
+    </div>
+
+    <button mat-stroked-button class="dbp-btn-refrescar" (click)="fn_cargarTodo()">
+      <mat-icon>refresh</mat-icon> Actualizar
+    </button>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       BLOQUE 1 — EL PULSO DE HOY
+       ══════════════════════════════════════════════ -->
+  <div class="dbp">
+
+    <div class="dbp-group-label"><span>EL PULSO DE HOY</span></div>
+
+    <div class="dbp-grid dbp-grid--dia">
+
+      <!-- Vendido / utilidad / cobrado -->
+      <div class="dbp-card">
+
+        <div class="dbp-card-head">
+          <span class="dbp-card-titulo">Vendido, cobrado y utilidad</span>
+          <span class="dbp-badge" *ngIf="dia.data">vs. {{ fn_diaCorto( dia.data.fechaComparativo ) }}</span>
+        </div>
+
+        <div class="dbp-cargando" *ngIf="dia.bCargando && !dia.data">
+          <mat-spinner diameter="34"></mat-spinner>
+        </div>
+
+        <div class="dbp-error" *ngIf="dia.bError">
+          <mat-icon>error_outline</mat-icon>
+          <span>No se pudo cargar el pulso del día.</span>
+          <button mat-stroked-button (click)="fn_reintentar('dia')">Reintentar</button>
+        </div>
+
+        <ng-container *ngIf="dia.data && !dia.bError">
+
+          <!-- Sin ventas registradas NO es lo mismo que "vendió cero". -->
+          <div class="dbp-vacio" *ngIf="dia.data.bSinDatos">
+            <mat-icon>event_busy</mat-icon>
+            <span>Sin registros este día</span>
+            <small>No hay notas levantadas ni pagos capturados con esta fecha de corte.</small>
+          </div>
+
+          <div class="dbp-card-body" *ngIf="!dia.data.bSinDatos">
+
+            <div class="dbp-kpis">
+
+              <div class="dbp-kpi">
+                <div class="dbp-kpi-label">Vendido</div>
+                <div class="dbp-kpi-valor">{{ dia.data.venta.vendido | currency }}</div>
+                <div class="dbp-kpi-sub">
+                  {{ dia.data.venta.notas }} nota(s)
+                  &middot; ticket {{ dia.data.venta.ticket | currency }}
+                </div>
+              </div>
+
+              <div class="dbp-kpi dbp-kpi--claro" *ngIf="dia.data.bVerCostos">
+                <div class="dbp-kpi-label">Utilidad generada</div>
+                <div class="dbp-kpi-valor">{{ dia.data.venta.utilidad | currency }}</div>
+                <div class="dbp-kpi-sub">margen {{ dia.data.venta.margen }}%</div>
+              </div>
+
+              <div class="dbp-kpi dbp-kpi--claro">
+                <div class="dbp-kpi-label">Cobrado</div>
+                <div class="dbp-kpi-valor">{{ dia.data.cobrado.total | currency }}</div>
+                <div class="dbp-kpi-sub">{{ dia.data.cobrado.movimientos }} movimiento(s)</div>
+              </div>
+
+              <div class="dbp-kpi dbp-kpi--claro">
+                <div class="dbp-kpi-label">Contra la semana pasada</div>
+                <div class="dbp-kpi-valor">
+                  <span class="dbp-var" [ngClass]="fn_claseVariacion( dia.data.variacionVendido )">
+                    {{ fn_variacionDesc( dia.data.variacionVendido ) }}
+                  </span>
+                </div>
+                <div class="dbp-kpi-sub">
+                  {{ dia.data.ventaComparativo.vendido | currency }} el mismo día
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Mostrador y taller por separado: el taller es el 21% de
+                 las notas de Sarita y se comporta distinto. -->
+            <div class="dbp-sec-label dbp-sec-label--sep">De dónde vino la venta</div>
+
+            <div class="dbp-mini-row">
+              <div class="dbp-mini">
+                <div class="dbp-mini-label">Mostrador</div>
+                <div class="dbp-mini-valor">{{ dia.data.mostrador.vendido | currency }}</div>
+                <div class="dbp-mini-sub">{{ dia.data.mostrador.notas }} nota(s)</div>
+              </div>
+              <div class="dbp-mini">
+                <div class="dbp-mini-label">Taller</div>
+                <div class="dbp-mini-valor" *ngIf="dia.data.taller.notas > 0">{{ dia.data.taller.vendido | currency }}</div>
+                <div class="dbp-mini-valor" *ngIf="dia.data.taller.notas === 0">Sin registros</div>
+                <div class="dbp-mini-sub" *ngIf="dia.data.taller.notas > 0">{{ dia.data.taller.notas }} nota(s)</div>
+              </div>
+              <div class="dbp-mini dbp-mini--alerta" *ngIf="dia.data.cajasSinCorte.length > 0">
+                <div class="dbp-mini-label">Cajas sin corte</div>
+                <div class="dbp-mini-valor">{{ dia.data.cajasSinCorte.length }}</div>
+                <div class="dbp-mini-sub">
+                  <span *ngFor="let c of dia.data.cajasSinCorte; let i = index">{{ i > 0 ? ', ' : '' }}{{ c.cajaDesc }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- El taller se captura con costo igual al precio, así que no
+                 aporta utilidad y arrastra el margen global hacia abajo.
+                 Se dice, en vez de dejarlo como misterio. -->
+            <div class="dbp-aviso dbp-aviso--info" *ngIf="dia.data.bTallerSinCosto">
+              <mat-icon>info_outline</mat-icon>
+              <span>
+                El taller se registra con costo igual al precio, así que no suma utilidad.
+                El margen del mostrador es {{ dia.data.mostrador.margen }}%.
+              </span>
+            </div>
+
+          </div>
+
+          <div class="dbp-card-foot" (click)="fn_irAVentas()" *ngIf="!dia.data.bSinDatos">
+            Ver las notas del día &rsaquo;
+          </div>
+
+        </ng-container>
+
+      </div>
+
+      <!-- Formas de pago -->
+      <div class="dbp-card">
+
+        <div class="dbp-card-head dbp-card-head--simple">
+          <span class="dbp-card-titulo">Con qué se pagó</span>
+        </div>
+
+        <div class="dbp-cargando" *ngIf="dia.bCargando && !dia.data">
+          <mat-spinner diameter="34"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="dia.data && !dia.bError">
+
+          <div class="dbp-vacio dbp-vacio--chico" *ngIf="dia.data.formasPago.length === 0">
+            <mat-icon>payments</mat-icon>
+            <span>Sin registros</span>
+            <small>No hay pagos capturados con esta fecha.</small>
+          </div>
+
+          <div class="dbp-card-body" *ngIf="dia.data.formasPago.length > 0">
+            <div class="dbp-barras">
+              <div class="dbp-barra-row" *ngFor="let f of dia.data.formasPago">
+                <span class="dbp-barra-etq dbp-barra-etq--truncada">{{ f.formaPagoDesc }}</span>
+                <span class="dbp-barra-pista">
+                  <span class="dbp-barra-fill" [style.width.%]="fn_anchoFormaPago( f.monto )"></span>
+                </span>
+                <span class="dbp-barra-valor">{{ f.monto | currency }}</span>
+                <span class="dbp-barra-notas">{{ f.movimientos }} mov.</span>
+              </div>
+            </div>
+
+            <div class="dbp-nota-pie dbp-nota-pie--interna">
+              Cobrado es el dinero que entró hoy. Vendido es lo que se facturó hoy. No son el mismo número.
+            </div>
+          </div>
+
+          <div class="dbp-card-foot" (click)="fn_irACortes()">
+            Ver cortes de caja &rsaquo;
+          </div>
+
+        </ng-container>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       BLOQUE 2 — QUIÉN VA ADELANTE
+       ══════════════════════════════════════════════ -->
+  <div class="dbp">
+
+    <div class="dbp-group-label"><span>QUIÉN VA ADELANTE</span></div>
+
+    <div class="dbp-card dbp-card--suelta">
+
+      <div class="dbp-card-head">
+        <span class="dbp-card-titulo">Por vendedor</span>
+        <span class="dbp-badge" *ngIf="vendedores.data">
+          {{ vendedores.data.bVerCostos ? 'ordenado por utilidad generada' : 'ordenado por importe vendido' }}
+        </span>
+      </div>
+
+      <div class="dbp-cargando" *ngIf="vendedores.bCargando && !vendedores.data">
+        <mat-spinner diameter="34"></mat-spinner>
+      </div>
+
+      <div class="dbp-error" *ngIf="vendedores.bError">
+        <mat-icon>error_outline</mat-icon>
+        <span>No se pudo cargar el desglose por vendedor.</span>
+        <button mat-stroked-button (click)="fn_reintentar('vendedores')">Reintentar</button>
+      </div>
+
+      <ng-container *ngIf="vendedores.data && !vendedores.bError">
+
+        <div class="dbp-vacio" *ngIf="vendedores.data.bSinDatos">
+          <mat-icon>groups</mat-icon>
+          <span>Sin registros este día</span>
+          <small>Ningún vendedor levantó notas con esta fecha de corte.</small>
+        </div>
+
+        <div class="dbp-tabla-wrap" *ngIf="!vendedores.data.bSinDatos">
+          <table class="dbp-tabla">
+            <thead>
+              <tr>
+                <th class="dbp-th dbp-th--left">Vendedor</th>
+                <th class="dbp-th dbp-th--center">Notas</th>
+                <th class="dbp-th dbp-th--right">Vendido</th>
+                <th class="dbp-th dbp-th--right" *ngIf="vendedores.data.bVerCostos">Utilidad generada</th>
+                <th class="dbp-th dbp-th--right" *ngIf="vendedores.data.bVerCostos">Margen</th>
+                <th class="dbp-th dbp-th--right">Ticket</th>
+                <th class="dbp-th dbp-th--left">&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dbp-tr" *ngFor="let v of vendedores.data.rows" (click)="fn_irAVentas()">
+                <td class="dbp-td">
+                  <div class="dbp-persona">
+                    <span class="dbp-persona-nombre">{{ v.vendedorDesc }}</span>
+                    <span class="dbp-persona-sub">{{ v.userName }}</span>
+                  </div>
+                </td>
+                <td class="dbp-td dbp-td--center">{{ v.notas }}</td>
+                <td class="dbp-td dbp-td--right dbp-td--fuerte">{{ v.vendido | currency }}</td>
+                <td class="dbp-td dbp-td--right dbp-td--verde" *ngIf="vendedores.data.bVerCostos">{{ v.utilidad | currency }}</td>
+                <td class="dbp-td dbp-td--right" *ngIf="vendedores.data.bVerCostos">{{ v.margen }}%</td>
+                <td class="dbp-td dbp-td--right">{{ v.ticket | currency }}</td>
+                <td class="dbp-td">
+                  <span class="dbp-barra-pista" style="width: 120px; display: inline-block; vertical-align: middle;">
+                    <span class="dbp-barra-fill"
+                          [style.width.%]="fn_anchoVendedor( vendedores.data.bVerCostos ? v.utilidad : v.vendido )"></span>
+                  </span>
+                </td>
+              </tr>
+              <tr class="dbp-tr-total">
+                <td class="dbp-td">Total del día</td>
+                <td class="dbp-td dbp-td--center">{{ vendedores.data.totales.notas }}</td>
+                <td class="dbp-td dbp-td--right">{{ vendedores.data.totales.vendido | currency }}</td>
+                <td class="dbp-td dbp-td--right" *ngIf="vendedores.data.bVerCostos">{{ vendedores.data.totales.utilidad | currency }}</td>
+                <td class="dbp-td dbp-td--right" *ngIf="vendedores.data.bVerCostos">{{ vendedores.data.totales.margen }}%</td>
+                <td class="dbp-td dbp-td--right">{{ vendedores.data.totales.ticket | currency }}</td>
+                <td class="dbp-td">&nbsp;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dbp-nota-pie" *ngIf="!vendedores.data.bSinDatos && vendedores.data.bVerCostos">
+          El orden es por utilidad generada, no por importe: es el número que distingue vender bien de vender barato.
+        </div>
+
+      </ng-container>
+
+    </div>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       BLOQUE 3 — CAPITAL DORMIDO
+       ══════════════════════════════════════════════ -->
+  <div class="dbp">
+
+    <div class="dbp-group-label"><span>CAPITAL DORMIDO</span></div>
+
+    <div class="dbp-cargando dbp-cargando--suelta" *ngIf="inventario.bCargando && !inventario.data">
+      <mat-spinner diameter="34"></mat-spinner>
+    </div>
+
+    <div class="dbp-card dbp-card--suelta" *ngIf="inventario.bError">
+      <div class="dbp-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>No se pudo cargar el inventario.</span>
+        <button mat-stroked-button (click)="fn_reintentar('inventario')">Reintentar</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="inventario.data && !inventario.bError">
+
+      <!-- Sin `dashboard_VerCostos` el servidor no manda nada de este
+           bloque, y aquí no se deja el hueco: se dice por qué. -->
+      <div class="dbp-card dbp-card--suelta" *ngIf="inventario.data.bSinPermiso">
+        <div class="dbp-vacio dbp-vacio--chico">
+          <mat-icon>lock_outline</mat-icon>
+          <span>Bloque restringido</span>
+          <small>El valor del inventario es información de costo. Requiere el permiso "Ver costos y utilidad en el panel".</small>
+        </div>
+      </div>
+
+      <div class="dbp-grid dbp-grid--3" *ngIf="!inventario.data.bSinPermiso">
+
+        <!-- Lo detenido -->
+        <div class="dbp-card dbp-card--kpi">
+
+          <div class="dbp-kpi-head">
+            <mat-icon class="dbp-kpi-icon dbp-kpi-icon--ambar">inventory_2</mat-icon>
+            <span class="dbp-kpi-titulo">Detenido en el anaquel</span>
+          </div>
+
+          <div class="dbp-cifra dbp-cifra--rojo">{{ inventario.data.dormido.costo | currency }}</div>
+          <div class="dbp-sub">
+            {{ inventario.data.dormido.productos }} productos
+            &middot; <strong>{{ inventario.data.dormido.porcentaje }}%</strong> del inventario a costo
+          </div>
+
+          <div class="dbp-barras dbp-barras--cubetas" style="margin-top: 18px;">
+            <div class="dbp-barra-row dbp-barra-row--click"
+                 *ngFor="let c of inventario.data.cubetas"
+                 (click)="fn_irAProductos()">
+              <span class="dbp-barra-etq dbp-barra-etq--ancha dbp-barra-etq--truncada">{{ c.etiqueta }}</span>
+              <span class="dbp-barra-pista">
+                <span class="dbp-barra-fill" [style.width.%]="fn_anchoCubeta( c.costo )"></span>
+              </span>
+              <span class="dbp-barra-valor">{{ c.costo | currency }}</span>
+              <span class="dbp-barra-notas">{{ c.productos }} prod.</span>
+            </div>
+          </div>
+
+          <div class="dbp-aviso dbp-aviso--ambar" *ngIf="inventario.data.bajoPisoTotal > 0">
+            <mat-icon>warning_amber</mat-icon>
+            <span>
+              {{ inventario.data.bajoPisoTotal }} producto(s) del catálogo tienen precio por debajo de su mínimo
+              <span *ngIf="inventario.data.bajoPiso > 0">({{ inventario.data.bajoPiso }} con existencia)</span>.
+            </span>
+          </div>
+
+          <div class="dbp-nota-pie dbp-nota-pie--interna">
+            Cada renglón lleva al catálogo de productos.
+          </div>
+
+        </div>
+
+        <!-- Valor del inventario -->
+        <div class="dbp-card dbp-card--kpi">
+
+          <div class="dbp-kpi-head">
+            <mat-icon class="dbp-kpi-icon dbp-kpi-icon--morado">savings</mat-icon>
+            <span class="dbp-kpi-titulo">Valor del inventario</span>
+          </div>
+
+          <div class="dbp-vacio dbp-vacio--chico" *ngIf="inventario.data.bSinDatos">
+            <mat-icon>inbox</mat-icon>
+            <span>Sin registros</span>
+            <small>No hay productos con existencia.</small>
+          </div>
+
+          <ng-container *ngIf="!inventario.data.bSinDatos">
+
+            <div class="dbp-sec-label">A costo</div>
+            <div class="dbp-cifra dbp-cifra--morado">{{ inventario.data.costo | currency }}</div>
+            <div class="dbp-sub">
+              {{ inventario.data.productos }} productos &middot; {{ inventario.data.piezas }} piezas
+            </div>
+
+            <div class="dbp-sec-label dbp-sec-label--sep">A precio de lista</div>
+            <div class="dbp-mini-valor" style="font-size: 22px;">{{ inventario.data.lista | currency }}</div>
+            <div class="dbp-sub">utilidad potencial {{ inventario.data.utilidadPotencial | currency }}</div>
+
+          </ng-container>
+
+          <div class="dbp-nota-pie dbp-nota-pie--interna">
+            La existencia se calcula igual que en el catálogo: movimientos ya firmados por verificación y mostrador.
+          </div>
+
+        </div>
+
+        <!-- Sobres de taller detenidos -->
+        <div class="dbp-card dbp-card--kpi">
+
+          <div class="dbp-kpi-head">
+            <mat-icon class="dbp-kpi-icon dbp-kpi-icon--ambar">pending_actions</mat-icon>
+            <span class="dbp-kpi-titulo">Sobres de taller</span>
+          </div>
+
+          <div class="dbp-cargando" *ngIf="tendencia.bCargando && !tendencia.data">
+            <mat-spinner diameter="26"></mat-spinner>
+          </div>
+
+          <ng-container *ngIf="tendencia.data && !tendencia.bError">
+
+            <div class="dbp-vacio dbp-vacio--chico" *ngIf="tendencia.data.taller.bSinDatos">
+              <mat-icon>inventory</mat-icon>
+              <span>Sin registros</span>
+              <small>No hay sobres de taller con bitácora de estatus.</small>
+            </div>
+
+            <ng-container *ngIf="!tendencia.data.taller.bSinDatos">
+
+              <div class="dbp-barras">
+                <div class="dbp-barra-row" *ngFor="let e of tendencia.data.taller.estatus">
+                  <span class="dbp-barra-etq dbp-barra-etq--truncada">{{ e.estatusDesc }}</span>
+                  <span class="dbp-barra-pista">
+                    <span class="dbp-barra-fill dbp-barra-fill--gris" [style.width.%]="fn_anchoEstatusTaller( e.folios )"></span>
+                  </span>
+                  <span class="dbp-barra-valor">{{ e.folios }}</span>
+                </div>
+              </div>
+
+              <div class="dbp-sec-label dbp-sec-label--sep" *ngIf="tendencia.data.taller.detenidos.length > 0">
+                Los más detenidos
+              </div>
+
+              <div class="dbp-lista" *ngIf="tendencia.data.taller.detenidos.length > 0">
+                <div class="dbp-lista-row dbp-lista-row--chica" *ngFor="let d of tendencia.data.taller.detenidos">
+                  <span>Folio {{ d.idSale }} <small>{{ d.estatusDesc }}</small></span>
+                  <strong>{{ d.dias }} días</strong>
+                </div>
+              </div>
+
+            </ng-container>
+
+          </ng-container>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       BLOQUE 4 — EL MES
+       ══════════════════════════════════════════════ -->
+  <div class="dbp">
+
+    <div class="dbp-group-label"><span>EL MES</span></div>
+
+    <div class="dbp-cargando dbp-cargando--suelta" *ngIf="mes.bCargando && !mes.data">
+      <mat-spinner diameter="34"></mat-spinner>
+    </div>
+
+    <div class="dbp-card dbp-card--suelta" *ngIf="mes.bError">
+      <div class="dbp-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>No se pudo cargar el resumen del mes.</span>
+        <button mat-stroked-button (click)="fn_reintentar('mes')">Reintentar</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="mes.data && !mes.bError">
+
+      <div class="dbp-card dbp-card--suelta" *ngIf="mes.data.bSinDatos">
+        <div class="dbp-vacio">
+          <mat-icon>calendar_month</mat-icon>
+          <span>Sin registros este mes</span>
+          <small>No hay notas levantadas entre {{ mes.data.desde }} y {{ mes.data.hasta }}.</small>
+        </div>
+      </div>
+
+      <div class="dbp-grid dbp-grid--mes" *ngIf="!mes.data.bSinDatos">
+
+        <!-- Acumulado y comparativos -->
+        <div class="dbp-card dbp-card--kpi">
+
+          <div class="dbp-kpi-head">
+            <mat-icon class="dbp-kpi-icon dbp-kpi-icon--morado">trending_up</mat-icon>
+            <span class="dbp-kpi-titulo">Acumulado del {{ fn_rangoDesc( mes.data.desde, mes.data.hasta ) }}</span>
+          </div>
+
+          <div class="dbp-cifra dbp-cifra--morado">{{ mes.data.venta.vendido | currency }}</div>
+          <div class="dbp-sub">
+            {{ mes.data.venta.notas }} notas
+            &middot; ticket {{ mes.data.venta.ticket | currency }}
+            &middot; {{ mes.data.venta.piezas }} piezas
+          </div>
+
+          <div class="dbp-kpi-linea" *ngIf="mes.data.bVerCostos">
+            <span class="dbp-chip dbp-chip--verde">Utilidad generada {{ mes.data.venta.utilidad | currency }}</span>
+            <span class="dbp-chip dbp-chip--morado">Margen {{ mes.data.venta.margen }}%</span>
+          </div>
+
+          <!-- Los DOS comparativos. El anual no es adorno: mes contra
+               mes la venta "cae" por estacionalidad de papelería, y sin
+               este renglón el panel contaría una historia falsa. -->
+          <div class="dbp-sec-label dbp-sec-label--sep">Comparado contra</div>
+
+          <table class="dbp-tabla dbp-tabla--comparativa">
+            <tbody>
+              <tr>
+                <td class="dbp-td">
+                  <div class="dbp-persona">
+                    <span class="dbp-persona-nombre">Mes anterior</span>
+                    <span class="dbp-persona-sub">{{ fn_rangoDesc( mes.data.mesAnterior.desde, mes.data.mesAnterior.hasta ) }}</span>
+                  </div>
+                </td>
+                <td class="dbp-td dbp-td--right">{{ mes.data.mesAnterior.venta.vendido | currency }}</td>
+                <td class="dbp-td dbp-td--right" *ngIf="mes.data.bVerCostos">{{ mes.data.mesAnterior.venta.margen }}%</td>
+                <td class="dbp-td dbp-td--right">
+                  <span class="dbp-var" [ngClass]="fn_claseVariacion( mes.data.mesAnterior.variacionVendido )">
+                    {{ fn_variacionDesc( mes.data.mesAnterior.variacionVendido ) }}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="dbp-td">
+                  <div class="dbp-persona">
+                    <span class="dbp-persona-nombre">Mismo mes del año pasado</span>
+                    <span class="dbp-persona-sub">{{ fn_rangoDesc( mes.data.mismoMesAnioAnterior.desde, mes.data.mismoMesAnioAnterior.hasta ) }}</span>
+                  </div>
+                </td>
+                <td class="dbp-td dbp-td--right">{{ mes.data.mismoMesAnioAnterior.venta.vendido | currency }}</td>
+                <td class="dbp-td dbp-td--right" *ngIf="mes.data.bVerCostos">{{ mes.data.mismoMesAnioAnterior.venta.margen }}%</td>
+                <td class="dbp-td dbp-td--right">
+                  <span class="dbp-var" [ngClass]="fn_claseVariacion( mes.data.mismoMesAnioAnterior.variacionVendido )">
+                    {{ fn_variacionDesc( mes.data.mismoMesAnioAnterior.variacionVendido ) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="dbp-kpi-linea" *ngIf="mes.data.bVerCostos">
+            <span class="dbp-chip dbp-chip--gris">
+              Margen {{ fn_puntosDesc( mes.data.mesAnterior.variacionMargenPuntos ) }} vs. mes anterior
+            </span>
+            <span class="dbp-chip dbp-chip--gris">
+              {{ fn_puntosDesc( mes.data.mismoMesAnioAnterior.variacionMargenPuntos ) }} vs. año pasado
+            </span>
+          </div>
+
+          <div class="dbp-nota-pie dbp-nota-pie--interna">
+            Los dos comparativos van cortados al mismo día del mes: comparar 14 días contra 31 no dice nada.
+          </div>
+
+        </div>
+
+        <!-- Venta diaria -->
+        <div class="dbp-card">
+
+          <div class="dbp-card-head dbp-card-head--simple">
+            <span class="dbp-card-titulo">Venta diaria del mes</span>
+          </div>
+
+          <div class="dbp-card-body">
+            <div class="dbp-chart">
+              <div class="dbp-chart-col" *ngFor="let d of mes.data.diaria">
+                <span class="dbp-chart-barra"
+                      [style.height.%]="fn_anchoDiaria( d.vendido )"
+                      [title]="fn_diaCorto( d.fecha ) + ' · ' + d.notas + ' notas'"></span>
+                <span class="dbp-chart-etq">{{ fn_diaCorto( d.fecha ) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dbp-card-foot" (click)="fn_irAVentas()">
+            Ver la consulta de ventas &rsaquo;
+          </div>
+
+        </div>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════
+       BLOQUE 5 — TENDENCIA Y RITMO
+       ══════════════════════════════════════════════ -->
+  <div class="dbp">
+
+    <div class="dbp-group-label"><span>TENDENCIA Y RITMO</span></div>
+
+    <div class="dbp-cargando dbp-cargando--suelta" *ngIf="tendencia.bCargando && !tendencia.data">
+      <mat-spinner diameter="34"></mat-spinner>
+    </div>
+
+    <div class="dbp-card dbp-card--suelta" *ngIf="tendencia.bError">
+      <div class="dbp-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>No se pudo cargar la tendencia.</span>
+        <button mat-stroked-button (click)="fn_reintentar('tendencia')">Reintentar</button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="tendencia.data && !tendencia.bError">
+
+      <div class="dbp-grid dbp-grid--ritmo">
+
+        <!-- Qué se está moviendo -->
+        <div class="dbp-card">
+
+          <div class="dbp-card-head">
+            <span class="dbp-card-titulo">Qué se está moviendo</span>
+            <span class="dbp-badge">
+              piezas, {{ fn_rangoDesc( tendencia.data.productos.desde, tendencia.data.productos.hasta ) }}
+              vs. {{ fn_rangoDesc( tendencia.data.productos.desdeComparativo, tendencia.data.productos.hastaComparativo ) }}
+            </span>
+          </div>
+
+          <div class="dbp-vacio dbp-vacio--chico" *ngIf="tendencia.data.productos.bSinDatos">
+            <mat-icon>show_chart</mat-icon>
+            <span>Sin registros</span>
+            <small>No hay movimiento de productos que comparar en estos dos periodos.</small>
+          </div>
+
+          <div class="dbp-card-body" *ngIf="!tendencia.data.productos.bSinDatos">
+
+            <div class="dbp-sec-label" *ngIf="tendencia.data.productos.suben.length > 0">Subiendo</div>
+            <div class="dbp-barras">
+              <div class="dbp-barra-row" *ngFor="let p of tendencia.data.productos.suben">
+                <span class="dbp-barra-etq dbp-barra-etq--ancha dbp-barra-etq--truncada" [title]="p.productoDesc">{{ p.productoDesc }}</span>
+                <span class="dbp-barra-pista">
+                  <span class="dbp-barra-fill dbp-barra-fill--sube" [style.width.%]="fn_anchoTendencia( p.delta )"></span>
+                </span>
+                <span class="dbp-barra-valor dbp-td--verde">{{ fn_deltaDesc( p.delta ) }}</span>
+                <span class="dbp-barra-notas">{{ p.piezasAnterior }} &rarr; {{ p.piezasActual }}</span>
+              </div>
+            </div>
+
+            <div class="dbp-sec-label dbp-sec-label--sep" *ngIf="tendencia.data.productos.bajan.length > 0">Bajando</div>
+            <div class="dbp-barras">
+              <div class="dbp-barra-row" *ngFor="let p of tendencia.data.productos.bajan">
+                <span class="dbp-barra-etq dbp-barra-etq--ancha dbp-barra-etq--truncada" [title]="p.productoDesc">{{ p.productoDesc }}</span>
+                <span class="dbp-barra-pista">
+                  <span class="dbp-barra-fill dbp-barra-fill--baja" [style.width.%]="fn_anchoTendencia( p.delta )"></span>
+                </span>
+                <span class="dbp-barra-valor dbp-td--rojo">{{ fn_deltaDesc( p.delta ) }}</span>
+                <span class="dbp-barra-notas">{{ p.piezasAnterior }} &rarr; {{ p.piezasActual }}</span>
+              </div>
+            </div>
+
+            <div class="dbp-nota-pie dbp-nota-pie--interna">
+              Las dos listas se miden contra la misma escala, para que un +12 no se vea igual de largo que un &minus;380.
+            </div>
+
+          </div>
+
+          <div class="dbp-card-foot" (click)="fn_irAProductos()" *ngIf="!tendencia.data.productos.bSinDatos">
+            Ver el catálogo de productos &rsaquo;
+          </div>
+
+        </div>
+
+        <!-- Ritmo: horas pico y día de la semana -->
+        <div class="dbp-card">
+
+          <div class="dbp-card-head">
+            <span class="dbp-card-titulo">Horas pico</span>
+            <span class="dbp-badge">últimos {{ tendencia.data.ritmo.dias }} días</span>
+          </div>
+
+          <div class="dbp-vacio dbp-vacio--chico" *ngIf="tendencia.data.ritmo.bSinDatos">
+            <mat-icon>schedule</mat-icon>
+            <span>Sin registros</span>
+            <small>No hay ventas en la ventana de análisis.</small>
+          </div>
+
+          <div class="dbp-card-body" *ngIf="!tendencia.data.ritmo.bSinDatos">
+
+            <div class="dbp-chart dbp-chart--chica">
+              <div class="dbp-chart-col" *ngFor="let h of tendencia.data.ritmo.horas">
+                <span class="dbp-chart-barra"
+                      [class.dbp-chart-barra--pico]="tendencia.data.ritmo.horaPico && h.hora === tendencia.data.ritmo.horaPico.hora"
+                      [style.height.%]="fn_anchoHora( h.notas )"
+                      [title]="fn_horaDesc( h.hora ) + ' · ' + h.notas + ' notas'"></span>
+                <span class="dbp-chart-etq">{{ h.hora }}</span>
+              </div>
+            </div>
+
+            <div class="dbp-kpi-linea">
+              <span class="dbp-chip dbp-chip--morado" *ngIf="tendencia.data.ritmo.horaPico">
+                Pico a las {{ fn_horaDesc( tendencia.data.ritmo.horaPico.hora ) }}
+                &middot; {{ tendencia.data.ritmo.horaPico.notas }} notas
+              </span>
+              <span class="dbp-chip dbp-chip--gris" *ngIf="tendencia.data.ritmo.diaMasFlojo">
+                Día más flojo: {{ tendencia.data.ritmo.diaMasFlojo.diaDesc }}
+                &middot; {{ tendencia.data.ritmo.diaMasFlojo.notasPorDia }} notas/día
+              </span>
+            </div>
+
+            <div class="dbp-sec-label dbp-sec-label--sep">Por día de la semana</div>
+
+            <div class="dbp-barras">
+              <div class="dbp-barra-row" *ngFor="let d of tendencia.data.ritmo.diasSemana">
+                <span class="dbp-barra-etq">{{ d.diaDesc }}</span>
+                <span class="dbp-barra-pista">
+                  <span class="dbp-barra-fill" [style.width.%]="fn_anchoDiaSemana( d.notasPorDia )"></span>
+                </span>
+                <span class="dbp-barra-valor">{{ d.notasPorDia }}</span>
+                <span class="dbp-barra-notas">notas/día</span>
+              </div>
+            </div>
+
+            <div class="dbp-nota-pie dbp-nota-pie--interna">
+              Se compara el promedio por día, no el total: en {{ tendencia.data.ritmo.dias }} días no caen las mismas veces los siete días de la semana.
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Uso del catálogo de descuentos -->
+      <div class="dbp-card dbp-card--suelta">
+
+        <div class="dbp-card-head">
+          <span class="dbp-card-titulo">Tipos de precio aplicados</span>
+          <span class="dbp-badge">{{ fn_rangoDesc( tendencia.data.descuentos.desde, tendencia.data.descuentos.hasta ) }}</span>
+        </div>
+
+        <div class="dbp-vacio dbp-vacio--chico" *ngIf="tendencia.data.descuentos.bSinDatos">
+          <mat-icon>sell</mat-icon>
+          <span>Sin registros</span>
+          <small>No se aplicó ningún descuento en el periodo.</small>
+        </div>
+
+        <div class="dbp-tabla-wrap" *ngIf="!tendencia.data.descuentos.bSinDatos">
+          <table class="dbp-tabla">
+            <thead>
+              <tr>
+                <th class="dbp-th dbp-th--left">Descuento aplicado</th>
+                <th class="dbp-th dbp-th--center">Líneas</th>
+                <th class="dbp-th dbp-th--center">Notas</th>
+                <th class="dbp-th dbp-th--right">Monto descontado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="dbp-tr" *ngFor="let d of tendencia.data.descuentos.rows" (click)="fn_irAVentas()">
+                <td class="dbp-td dbp-td--fuerte">{{ d.porcentaje }}%</td>
+                <td class="dbp-td dbp-td--center">{{ d.lineas }}</td>
+                <td class="dbp-td dbp-td--center">{{ d.notas }}</td>
+                <td class="dbp-td dbp-td--right dbp-td--ambar">{{ d.montoDescontado | currency }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="dbp-nota-pie" *ngIf="!tendencia.data.descuentos.bSinDatos">
+          El porcentaje se reconstruye del descuento capturado en cada línea: la venta no guarda de cuál renglón del catálogo salió.
+        </div>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+
+</div>

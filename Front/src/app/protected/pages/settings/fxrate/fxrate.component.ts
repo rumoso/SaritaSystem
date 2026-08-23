@@ -8,6 +8,7 @@ import { FxrateService } from 'src/app/protected/services/fxrate.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-fxrate',
   templateUrl: './fxrate.component.html',
@@ -61,9 +62,17 @@ export class FxrateComponent implements OnInit {
 
     , private fxRateServ: FxrateService
 
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('currency_exchange', 'Tipos de Cambio', 'Referencias de tipo de cambio');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

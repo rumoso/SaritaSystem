@@ -62,6 +62,7 @@ import { ActionsectionComponent } from './pages/security/mdl/actionsection/actio
 import { ActionComponent } from './pages/security/mdl/action/action.component';
 import { CatdescuentosComponent } from './pages/settings/catdescuentos/catdescuentos.component';
 import { ApplyDiscountComponent } from './pages/sales/mdl/apply-discount/apply-discount.component';
+import { DashboardDirectorComponent } from './pages/dashboard-director/dashboard-director.component';
 
 @NgModule({
     declarations: [
@@ -120,6 +121,7 @@ import { ApplyDiscountComponent } from './pages/sales/mdl/apply-discount/apply-d
     ActionComponent,
     CatdescuentosComponent,
     ApplyDiscountComponent,
+    DashboardDirectorComponent,
   ],
     imports: [
         CommonModule,

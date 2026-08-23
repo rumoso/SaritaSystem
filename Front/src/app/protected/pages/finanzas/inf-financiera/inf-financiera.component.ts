@@ -14,6 +14,7 @@ import { UsersService } from 'src/app/protected/services/users.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-inf-financiera',
   templateUrl: './inf-financiera.component.html',
@@ -44,9 +45,17 @@ export class InfFinancieraComponent {
     , private authServ: AuthService
     , private userServ: UsersService
     , private finanzasServ: FinanzasService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('account_balance', 'Información Financiera', 'Costo, precio y márgenes de utilidad');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

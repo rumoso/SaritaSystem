@@ -11,6 +11,7 @@ import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 import { CortecajadetailComponent } from '../../sales/mdl/cortecajadetail/cortecajadetail.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-pagos-cancelados',
   templateUrl: './pagos-cancelados.component.html',
@@ -76,9 +77,17 @@ constructor(
   , private customersServ: CustomersService
   , private salesServ: SalesService
 
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
   async ngOnInit() {
+    this.pageTitleServ.set('cancel', 'Pagos Cancelados', 'Historial de pagos cancelados');
 
     this.authServ.checkSession();
     this.idUserLogON = await this.authServ.getIdUserSession();

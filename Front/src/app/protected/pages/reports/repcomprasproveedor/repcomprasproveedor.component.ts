@@ -11,6 +11,7 @@ import { SuppliersService } from 'src/app/protected/services/suppliers.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-repcomprasproveedor',
   templateUrl: './repcomprasproveedor.component.html',
@@ -33,9 +34,17 @@ export class RepcomprasproveedorComponent {
     , private authServ: AuthService
 
     , private suppliersServ: SuppliersService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('local_shipping', 'Compras a Proveedor', 'Reporte de compras por proveedor');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

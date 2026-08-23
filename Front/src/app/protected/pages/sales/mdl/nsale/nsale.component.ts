@@ -53,7 +53,6 @@ export class NsaleComponent {
   idSale: any = '';
 
   dialogAbierto: boolean = false;
-  isPrecioUnitarioEditable: boolean = true;
 
   showPaymentsAtStart: boolean = true;
 
@@ -118,10 +117,10 @@ export class NsaleComponent {
     cantidad: 1,
     precioUnitario: 0,
     // Precio de catálogo tal como vino del producto, SIN tocar — sirve de
-    // techo real para el piso de costo+30%. precioUnitario sí se puede
-    // editar (botón "cambiar precio"), así que no es seguro usarlo como
-    // límite: si se usara, editar el precio a algo bajo también bajaría
-    // el propio límite y la validación se anularía a sí misma.
+    // techo real para el piso de costo+30%. precioUnitario es editable
+    // libre por el cajero, así que no es seguro usarlo como límite: si se
+    // usara, bajar el precio a mano también bajaría el propio límite y la
+    // validación se anularía a sí misma.
     precioCatalogo: 0,
     descuento: '',
     descuentoEnPesos: '',
@@ -577,10 +576,6 @@ export class NsaleComponent {
 
                 this.nextInputFocus( this.tbxCantidad, 500);
 
-                setTimeout (() => {
-                  this.isPrecioUnitarioEditable = false;
-                }, 1);
-
               }else{
 
                 this.salesDetailForm.barCode = '';
@@ -592,10 +587,6 @@ export class NsaleComponent {
                 this.salesDetailForm.precioCatalogo = 0;
 
                 this.salesDetailForm.catInventary = 0;
-
-                setTimeout (() => {
-                  this.isPrecioUnitarioEditable = false;
-                }, 1);
 
               }
 
@@ -758,47 +749,6 @@ export class NsaleComponent {
 // SECCIÓN DE MÉTODOS CON EL FRONT
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn_habilitarPrice(  ){
-
-  if( !this.isPrecioUnitarioEditable && this.salesDetailForm.precioUnitario > 0 ){
-
-    this.servicesGServ.showDialog('¿Estás seguro?'
-    , 'Quieres cambiar el precio del producto?'
-    , '¿Desea continuar?'
-    , 'Si', 'No')
-    .afterClosed().subscribe({
-      next: ( resp ) =>{
-
-        if( resp ){
-
-          var paramsMDL: any = {
-            actionName: 'ventas_changePrice'
-          }
-
-          this.servicesGServ.showModalWithParams( ActionAuthorizationComponent, paramsMDL, '400px')
-          .afterClosed().subscribe({
-            next: ( resp ) =>{
-
-              if( resp ){
-
-                this.isPrecioUnitarioEditable = true;
-
-              }
-
-            }
-
-          });
-
-        }
-
-      }
-
-     });
-
-   }
-
-}
-
 fn_changeDescuentoEnPesos(  ){
 
   if( !this.dialogAbierto ){
@@ -877,17 +827,24 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
 
           if( ( this.salesDetailForm.catInventary - totalCantidadAgregada ) >= this.salesDetailForm.cantidad){
 
+            // El input de precio es de texto (para poder capturar "250.50"
+            // sin arrancar desde los centavos), así que ngModel entrega
+            // STRING. Se normaliza AQUÍ, ya al confirmar la línea: hacerlo
+            // en cada tecla borraría el punto decimal mientras se escribe.
+            const nPrecioUnitario = parseFloat( this.salesDetailForm.precioUnitario ) || 0;
+            this.salesDetailForm.precioUnitario = nPrecioUnitario;
+
             //SACO EL PREIMPORTE
-            var preImporte = this.salesDetailForm.precioUnitario * this.salesDetailForm.cantidad;
+            var preImporte = nPrecioUnitario * this.salesDetailForm.cantidad;
 
             //SACO EL DESCUENTO
             // CONVIERTO EN DECIMAL LE PORCENTAJE
             var porcentajeDescuento = ( this.salesDetailForm.descuento ? this.salesDetailForm.descuento : 0 ) / 100;
-            var precioDescuento = porcentajeDescuento * this.salesDetailForm.precioUnitario;
+            var precioDescuento = porcentajeDescuento * nPrecioUnitario;
             precioDescuento += this.salesDetailForm.descuentoEnPesos ? this.salesDetailForm.descuentoEnPesos : 0;
             precioDescuento = Math.floor( parseFloat( precioDescuento.toFixed(2) ) );
 
-            var precio = this.salesDetailForm.precioUnitario - precioDescuento;
+            var precio = nPrecioUnitario - precioDescuento;
 
             var importe = precio * this.salesDetailForm.cantidad;
 
@@ -1014,7 +971,6 @@ public nextInputFocus( idInput: any, milliseconds: number ) {
 
       this.nextInputFocus( this.barCode , 0);
 
-      this.isPrecioUnitarioEditable = false;
     }
 
   fn_ShowPayments(){
@@ -1589,6 +1545,12 @@ ev_fn_cbxCantidad_keyup_enter(event: any){
 }
 
 ev_fn_cbxPrecio_keyup_enter(event: any){
+
+  // Validación en vivo: el cajero ve el aviso mientras teclea, sin
+  // esperar a "Agregar". Solo se LEE el valor — nunca se reescribe el
+  // modelo aquí, o se borraría el punto decimal al capturarlo.
+  this.fn_validarPrecioMinimo();
+
   if(event.keyCode == 13) { // PRESS ENTER
 
     if( this.salesDetailForm.cantidad > 0 ){
@@ -1596,6 +1558,48 @@ ev_fn_cbxPrecio_keyup_enter(event: any){
     }
 
   }
+}
+
+// Piso de costo+30%, con el precio de catálogo como techo (mismo criterio
+// que addSaleDetail). Se usa para el aviso en vivo mientras se escribe.
+fn_precioMinimoDeLinea(): number {
+  return this.salesDetailForm.costPlusPorcent > 0
+    ? ( this.salesDetailForm.precioCatalogo > 0
+        ? Math.min( this.salesDetailForm.costPlusPorcent, this.salesDetailForm.precioCatalogo )
+        : this.salesDetailForm.costPlusPorcent )
+    : 0;
+}
+
+fn_validarPrecioMinimo(){
+
+  const nPrecio = parseFloat( this.salesDetailForm.precioUnitario );
+  const nMinimo = this.fn_precioMinimoDeLinea();
+
+  // Campo vacío o producto sin costo: nada que avisar todavía.
+  if( isNaN( nPrecio ) || nMinimo <= 0 ){
+    this.sMensajePrecioMinimo = '';
+    return;
+  }
+
+  this.sMensajePrecioMinimo = nPrecio < ( nMinimo - 0.005 )
+    ? 'No puede venderse en $' + nPrecio.toFixed(2)
+      + ', el precio mínimo permitido es $' + nMinimo.toFixed(2) + '.'
+    : '';
+
+}
+
+// Selecciona el contenido al enfocar, para poder teclear otro importe
+// encima sin borrar primero (igual que en Cobrar).
+event_fn_SeleccionarTexto( event: any ){
+
+  const oInput = event?.target;
+
+  if( !oInput ) return;
+
+  setTimeout(() => {
+    oInput.select();
+  }, 0);
+
 }
 
 ev_fn_cbxDescuentoEnPorcentaje_keyup_enter(event: any){
@@ -1788,7 +1792,6 @@ async ev_PrintTicketConsHistoryList(){
 
       this.nextInputFocus( this.tbxCantidad, 500);
 
-      this.isPrecioUnitarioEditable = false;
 
 
     }, 1);

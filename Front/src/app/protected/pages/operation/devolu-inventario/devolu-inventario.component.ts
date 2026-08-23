@@ -10,6 +10,7 @@ import { environment } from 'src/environments/environment';
 import { ActionAuthorizationComponent } from '../../security/users/mdl/action-authorization/action-authorization.component';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-devolu-inventario',
   templateUrl: './devolu-inventario.component.html',
@@ -74,9 +75,17 @@ constructor(
   , @Inject(MAT_DATE_LOCALE) private _locale: string
 
   , private authServ: AuthService
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
   async ngOnInit() {
+    this.pageTitleServ.set('keyboard_return', 'Devolución de Inventario', 'Regresos de mercancía al inventario');
 
     this.authServ.checkSession();
     this.idUserLogON = await this.authServ.getIdUserSession();

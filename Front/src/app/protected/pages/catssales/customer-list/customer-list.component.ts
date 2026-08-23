@@ -11,6 +11,7 @@ import { environment } from 'src/environments/environment';
 import { CustomerComponent } from '../customer/customer.component';
 import { ElectronicMoneyMDLComponent } from '../mdl/electronic-money-mdl/electronic-money-mdl.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-customer-list',
   templateUrl: './customer-list.component.html',
@@ -30,10 +31,18 @@ export class CustomerListComponent implements OnInit {
     , private authServ: AuthService
 
     , private customersServ: CustomersService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
     
 
   ngOnInit(): void {
+    this.pageTitleServ.set('people', 'Clientes', 'Catálogo de clientes y dinero electrónico');
 
     this.authServ.checkSession();
 

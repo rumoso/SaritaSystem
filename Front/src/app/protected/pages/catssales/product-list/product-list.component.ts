@@ -17,6 +17,7 @@ import { environment } from 'src/environments/environment';
 import { InventarylogComponent } from '../mdl/inventarylog/inventarylog.component';
 import { ProductComponent } from '../product/product.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
@@ -44,9 +45,17 @@ export class ProductListComponent implements OnInit {
     , private sucursalesServ: SucursalesService
 
     , private authServ: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('inventory_2', 'Productos', 'Catálogo de productos y precios');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

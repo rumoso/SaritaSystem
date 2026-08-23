@@ -24,6 +24,7 @@ import { EditTallerComponent } from '../mdl/edit-taller/edit-taller.component';
 import { IngresosComponent } from '../mdl/ingresos/ingresos.component';
 import { QuestionCancelSalePaymentsComponent } from '../mdl/question-cancel-sale-payments/question-cancel-sale-payments.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-sale-list',
   templateUrl: './sale-list.component.html',
@@ -118,9 +119,17 @@ constructor(
   , private printTicketServ: PrintTicketService
   , private salesTypeServ: SalestypeService
 
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
   async ngOnInit() {
+    this.pageTitleServ.set('point_of_sale', 'Ventas', 'Órdenes de venta, pagos y facturación');
 
     this.authServ.checkSession();
     this.idUserLogON = await this.authServ.getIdUserSession();

@@ -6,6 +6,7 @@ import { Pagination, ResponseGet } from 'src/app/interfaces/general.interfaces';
 import { ProductsService } from 'src/app/protected/services/products.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-inventary-log',
   templateUrl: './inventary-log.component.html',
@@ -46,9 +47,17 @@ export class InventaryLogComponent {
     , @Inject(MAT_DATE_LOCALE) private _locale: string
 
     , private authServ: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('history', 'Historial de Inventario', 'Movimientos de entrada y salida de producto');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

@@ -11,6 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Subject, debounceTime } from 'rxjs';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-rep-mob-dineoelect',
   templateUrl: './rep-mob-dineoelect.component.html',
@@ -69,10 +70,18 @@ export class RepMobDineoelectComponent {
 
     , private customersServ: CustomersService
     , private electronicMoneyServ: ElectronicMoneyService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
     
 
     async ngOnInit() {
+    this.pageTitleServ.set('account_balance_wallet', 'Movimientos de Dinero Electrónico', 'Reporte de pagos con tarjeta y transferencia');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

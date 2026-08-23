@@ -5,6 +5,7 @@ import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 import { SoundService } from '../../services/sound.service';
 import { ChangepwdsecretwordComponent } from '../security/mdl/changepwdsecretword/changepwdsecretword.component';
+import { PageTitleService } from '../../services/page-title.service';
 
 @Component({
   selector: 'app-main',
@@ -21,7 +22,8 @@ export class MainComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private servicesGServ: ServicesGService
+    private servicesGServ: ServicesGService,
+    public pageTitleServ: PageTitleService
   ) { }
 
   get userLogin() {
@@ -77,6 +79,11 @@ export class MainComponent implements OnInit {
 
       }
     });
+  }
+
+  // Sin manejo de secciones: la flecha siempre regresa al dashboard.
+  fn_volverDashboard() {
+    this.servicesGServ.changeRoute( `/${ this._appMain }/dashboard` );
   }
 
 }

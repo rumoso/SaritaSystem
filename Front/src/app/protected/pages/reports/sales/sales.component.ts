@@ -11,6 +11,7 @@ import { SalestypeService } from 'src/app/protected/services/salestype.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-sales',
   templateUrl: './sales.component.html',
@@ -81,9 +82,17 @@ export class SalesComponent {
     , private salesServ: SalesService
     , private salesTypeServ: SalestypeService
 
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('receipt_long', 'Reporte de Ventas', 'Detalle de ventas por periodo');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

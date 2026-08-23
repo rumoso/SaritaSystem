@@ -11,6 +11,7 @@ import { ActionsComponent } from '../mdl/actions/actions.component';
 import { ActionsconfComponent } from '../../mdl/actionsconf/actionsconf.component';
 import { MenupermisosComponent } from '../../mdl/menupermisos/menupermisos.component';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-user-list',
   templateUrl: './user-list.component.html',
@@ -24,9 +25,17 @@ export class UserListComponent implements OnInit {
     private servicesGServ: ServicesGService
     , private usersServ: UsersService
     , private authServ: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     ngOnInit(): void {
+    this.pageTitleServ.set('manage_accounts', 'Usuarios', 'Cuentas de acceso al sistema');
       this.authServ.checkSession();
       
       this.fn_getUsersListWithPage();

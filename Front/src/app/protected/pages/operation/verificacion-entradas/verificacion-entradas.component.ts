@@ -11,6 +11,7 @@ import { ActionAuthorizationComponent } from '../../security/users/mdl/action-au
 import { ColumnFormat } from 'src/app/protected/interfaces/global.interfaces';
 import { PrinterPDFService } from 'src/app/protected/services/printer-pdf.service';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-verificacion-entradas',
   templateUrl: './verificacion-entradas.component.html',
@@ -66,9 +67,17 @@ export class VerificacionEntradasComponent {
 
     , private authServ: AuthService
     , private printerServ: PrinterPDFService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('move_to_inbox', 'Verificación de Entradas', 'Confirmación de mercancía recibida');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

@@ -111,4 +111,5 @@ const validarPisoCosto = async( saleDetail = [] ) => {
 module.exports = {
     validarPisoCosto
   , PORCENTAJE_PISO
+  , TOLERANCIA
 }

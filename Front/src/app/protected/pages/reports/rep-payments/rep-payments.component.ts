@@ -11,6 +11,7 @@ import { CortecajadetailComponent } from '../../sales/mdl/cortecajadetail/cortec
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-rep-payments',
   templateUrl: './rep-payments.component.html',
@@ -77,9 +78,17 @@ constructor(
   , private customersServ: CustomersService
   , private salesServ: SalesService
 
+  
+    , private pageTitleServ: PageTitleService
   ) { }
 
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
+
   async ngOnInit() {
+    this.pageTitleServ.set('payments', 'Reporte de Pagos', 'Detalle de pagos recibidos por periodo');
 
     this.authServ.checkSession();
     this.idUserLogON = await this.authServ.getIdUserSession();

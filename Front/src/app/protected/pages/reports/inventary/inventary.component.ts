@@ -17,6 +17,7 @@ import { environment } from 'src/environments/environment';
 
 
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-inventary',
   templateUrl: './inventary.component.html',
@@ -46,9 +47,17 @@ export class InventaryComponent {
     , private sucursalesServ: SucursalesService
 
     , private authServ: AuthService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('inventory', 'Inventario', 'Existencias por producto y sucursal');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();

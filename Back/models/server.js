@@ -34,6 +34,7 @@ class Server{
             comisiones:'/api/comisiones',
             finanzas:'/api/finanzas',
             discountCatalog:'/api/discountCatalog',
+            dashboard:'/api/dashboard',
 
         }
 
@@ -120,6 +121,7 @@ class Server{
         this.app.use(this.paths.comisiones, require('../routes/comisionesRoute'));
         this.app.use(this.paths.finanzas, require('../routes/finanzasRoute'));
         this.app.use(this.paths.discountCatalog, require('../routes/discountCatalogRoute'));
+        this.app.use(this.paths.dashboard, require('../routes/dashboardRoute'));
     }
 
     listen(){

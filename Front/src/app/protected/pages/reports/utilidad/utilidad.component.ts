@@ -18,6 +18,7 @@ import { UsersService } from 'src/app/protected/services/users.service';
 import { ServicesGService } from 'src/app/servicesG/servicesG.service';
 import { environment } from 'src/environments/environment';
 
+import { PageTitleService } from 'src/app/protected/services/page-title.service';
 @Component({
   selector: 'app-utilidad',
   templateUrl: './utilidad.component.html',
@@ -44,9 +45,17 @@ export class UtilidadComponent {
     , private authServ: AuthService
     , private userServ: UsersService
     , private repUtilidadesServ: RepUtilidadesService
-    ) { }
+    
+    , private pageTitleServ: PageTitleService
+  ) { }
+
+  ngOnDestroy(): void {
+    this.pageTitleServ.clear();
+  }
+
 
     async ngOnInit() {
+    this.pageTitleServ.set('trending_up', 'Utilidad', 'Reporte de utilidad y comisiones por venta');
 
       this.authServ.checkSession();
       this.idUserLogON = await this.authServ.getIdUserSession();
